@@ -7,7 +7,6 @@
 package ru.viljinsky.sensystem;
 
 import java.sql.Connection;
-import java.util.Iterator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import ru.viljinsky.project2019.DataModel;
@@ -19,56 +18,28 @@ import ru.viljinsky.server.IDB;
 import ru.viljinsky.server.ReplRecordset;
 
 /**
- * SenSystem controller
+ * SenSystem convertor
  * 
  * @author viljinsky
  */
 
 class JSonRecordset extends Recordset{
-    String json_name;
-    public JSonRecordset(String json_name,Recordset source ) {
-        this.json_name = json_name;
+    
+    public JSonRecordset(Recordset source ) {
         setColumns(source.columns);
         addAll(source);        
     }
 
-    public JSonRecordset(String json_name,Recordset source,Values values ) throws Exception{
-        this.json_name = json_name;        
+    public JSonRecordset(Recordset source,Values values ) throws Exception{
         setColumns(source.columns);
         addAll(source);        
         rename(values);
-    }
-        
-    @Override
-    public void print() {
-        System.out.println(json_name);
-        super.print(); //To change body of generated methods, choose Tools | Templates.
-    }
-    
-    public void addToJSON(JSONObject json){
-        JSONArray arr = new JSONArray();
-        for(Iterator<Values> it=getIterator();it.hasNext();){
-            Values values = it.next();
-            JSONObject obj = new JSONObject();
-            for(String key:values.keySet()){
-                obj.put(key, values.get(key));
-            }
-            arr.put(obj);
-        }
-        json.put(json_name, arr);        
     }
 }
 
 public class TestJSON3 extends JSONObject implements IDataModel {
     
     JSONArray meta = new JSONArray();
-    
-    void addMeta(JSonRecordset recordset){
-        JSONObject obj = new JSONObject();
-        obj.put("table_name", recordset.json_name);
-        obj.put("columns", new JSONArray(recordset.columns));
-        meta.put(obj);
-    }
     
     static final String ID = "id";
     static final String NAME = "name";
@@ -83,7 +54,7 @@ public class TestJSON3 extends JSONObject implements IDataModel {
             }
             arr.put(obj);
         }
-        System.out.println(arr.toString());
+//        System.out.println(arr.toString());
         return arr;
     }
     
@@ -94,52 +65,46 @@ public class TestJSON3 extends JSONObject implements IDataModel {
         meta.put(obj);
     }
         
-    public void addRecordset(String tableName,Recordset recordset){
+    private void addRecordset(String tableName,Recordset recordset){
 
         addMeta(tableName,recordset);
         put(tableName, recordsetToJson(recordset));
     }
 
     public TestJSON3(Connection con) throws Exception {
+        
         DB db = new DB(con);
                 
         Values values;
         JSonRecordset recordset;
                 
-        recordset = new JSonRecordset("attributes", db.attr(DATE_BEGIN,DATE_END));
+        recordset = new JSonRecordset(db.attr(DATE_BEGIN,DATE_END));
         addRecordset("attributes", recordset);
-//        addMeta(recordset);        
-//        recordset.addToJSON(this);
         
         values = new Values();
         values.put(SKILL_ID, ID);
         values.put(SKILL_NAME, NAME);
-        recordset = new JSonRecordset("skills",db.skill(),values); 
-        addMeta(recordset);
-        recordset.addToJSON(this);
-
+        recordset = new JSonRecordset(db.skill(),values); 
+        addRecordset("skills", recordset);
         
         values = new Values();
         values.put(SUBJECT_DOMAIN_ID, ID);
         values.put(SUBJECT_DOMAIN_NAME, NAME);
-        recordset = new JSonRecordset("subject_domains",db.subject_domain(),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.subject_domain(),values);
+        addRecordset("subject_domains", recordset);
         
         values = new Values();
         values.put(BUILDING_ID,ID);
         values.put(BUILDING_NAME,NAME);
-        recordset = new JSonRecordset("buildings", db.building(),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.building(),values);
+        addRecordset("buildings", recordset);
         
         values = new Values();
         values.put(BELL_ID, ID);
         values.put(TIME_START,"start");
         values.put(TIME_END, "end");
-        recordset = new JSonRecordset("bells",db.bell_list(),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.bell_list(),values);
+        addRecordset("bells",recordset);
         
         values = new Values();
         values.put(SHIFT_ID, ID);
@@ -147,76 +112,64 @@ public class TestJSON3 extends JSONObject implements IDataModel {
         
         Recordset r = db.shift_detail().join(db.shift(), SHIFT_ID).filter(new Values(SHIFT_TYPE_ID,1)).select(SHIFT_ID,BELL_ID);            
         r = db.shift().select(SHIFT_ID,SHIFT_NAME).join(r.min(BELL_ID, SHIFT_ID), SHIFT_ID).join(r.max(BELL_ID, SHIFT_ID), SHIFT_ID);                
-        recordset = new JSonRecordset("shifts", r,values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset( r,values);
+        addRecordset("shifts",recordset);
                 
         values = new Values();
         values.put(SUBJECT_ID, ID);
         values.put(SUBJECT_DOMAIN_ID,"domain_id");
         values.put(SUBJECT_NAME, NAME);
-        recordset = new JSonRecordset("subjects", db.subject().select(SUBJECT_ID,SUBJECT_NAME,COLOR,SUBJECT_DOMAIN_ID,"description"),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.subject().select(SUBJECT_ID,SUBJECT_NAME,COLOR,SUBJECT_DOMAIN_ID,"description"),values);
+        addRecordset("subjects", recordset);
                         
         values = new Values();
         values.put(ROOM_ID, ID);
         values.put(ROOM_NAME, NAME);
-        recordset = new JSonRecordset("rooms",db.room().select(ROOM_ID,ROOM_NAME,BUILDING_ID,"description"),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.room().select(ROOM_ID,ROOM_NAME,BUILDING_ID,"description"),values);
+        addRecordset("rooms",recordset);
         
         values = new Values();
         values.put("group_key",ID);
         values.put(GROUP_LABEL, NAME);
-        recordset = new JSonRecordset("depart_groups", db.query("select group_key,group_label from v_subject_group_label"),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.query("select group_key,group_label from v_subject_group_label"),values);
+        addRecordset("depart_groups", recordset);
 
         values = new Values();
         values.put(DEPART_ID,ID);
         values.put(DEPART_LABEL, NAME);
-        recordset = new JSonRecordset("departs", db.depart().select(DEPART_ID,DEPART_LABEL,SKILL_ID,SHIFT_ID,TEACHER_ID),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.depart().select(DEPART_ID,DEPART_LABEL,SKILL_ID,SHIFT_ID,TEACHER_ID),values);
+        addRecordset("departs", recordset);
 
         values = new Values();
         values.put(PROFILE_ID, ID);
         values.put(PROFILE_NAME, NAME);
-        recordset = new JSonRecordset("teacher_profiles", db.profile().filter(new Values(PROFILE_TYPE_ID,1)).select(PROFILE_ID,PROFILE_NAME),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.profile().filter(new Values(PROFILE_TYPE_ID,1)).select(PROFILE_ID,PROFILE_NAME),values);
+        addRecordset("teacher_profiles", recordset);
         
         values = new Values();
         values.put(TEACHER_ID, ID);
-        recordset = new JSonRecordset("teachers",db.teacher().select(TEACHER_ID,LAST_NAME,FIRST_NAME,PATRONYMIC,SHIFT_ID,ROOM_ID,PROFILE_ID,PHOTO),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(db.teacher().select(TEACHER_ID,LAST_NAME,FIRST_NAME,PATRONYMIC,SHIFT_ID,ROOM_ID,PROFILE_ID,PHOTO),values);
+        addRecordset("teachers",recordset);
         
         values.put(ROOM_ID, ID);
         values.put(ROOM_NAME,NAME);
-        recordset = new JSonRecordset("rooms", db.room().select(ROOM_ID,ROOM_NAME,BUILDING_ID,DESCRIPTION),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
-        
+        recordset = new JSonRecordset(db.room().select(ROOM_ID,ROOM_NAME,BUILDING_ID,DESCRIPTION),values);
+        addRecordset("rooms", recordset);
         
         r = db.schedule().left(db.query("select depart_id,subject_id,group_id,group_key from v_subject_group_label"),DEPART_ID,GROUP_ID,SUBJECT_ID);
         r = r.left(db.subject_group(), DEPART_ID,GROUP_ID,SUBJECT_ID);
         
         values = new Values();
         values.put(GROUP_KEY, "depart_group_id");
-        recordset = new JSonRecordset("schedules", r.select(DAY_ID,BELL_ID,DEPART_ID,SUBJECT_ID,GROUP_KEY,TEACHER_ID,ROOM_ID,WEEK_ID),values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(r.select(DAY_ID,BELL_ID,DEPART_ID,SUBJECT_ID,GROUP_KEY,TEACHER_ID,ROOM_ID,WEEK_ID),values);
+        addRecordset("schedules", recordset);
         
-//        r = new Recordset(DAY_ID,BELL_ID,DATE,DEPART_ID,SUBJECT_ID,"depart_group_id",TEACHER_ID,ROOM_ID,"change_type_id");
         r = new ReplRecordset(con).left(db.group_label(),DEPART_ID,GROUP_ID,SUBJECT_ID).select(DAY_ID,BELL_ID,DEPART_ID,SUBJECT_ID,FLAG,ReplRecordset.NEW_SUBJECT_ID,ReplRecordset.NEW_TEACHER_ID,ReplRecordset.NEW_ROOM_ID,GROUP_KEY);
         values = new Values();
         values.put(GROUP_KEY, "depart_group_id");
         values.put(FLAG,"change_type");
-        recordset = new JSonRecordset("changes", r,values);
-        addMeta(recordset);
-        recordset.addToJSON(this);
+        recordset = new JSonRecordset(r,values);
+        addRecordset("changes", recordset);
         
         put(IDB.META,meta);
         
@@ -225,23 +178,8 @@ public class TestJSON3 extends JSONObject implements IDataModel {
     public void check(JSONObject json){
         for(String s: json.keySet()){
             JSONArray arr = json.getJSONArray(s);
-            System.out.println(s + arr.toString());
-//            for(int i=0;i<arr.length();i++){
-//                System.out.println(arr.getJSONObject(i).toString());
-//            }
+            System.out.println(s + "   "+ arr.toString());
         }
-//        for(Object s: json.names()){
-//            System.out.println(s);
-//            System.out.println("------------------------");
-//            JSONArray arr = json.getJSONArray((String)s);
-//            for(int i=0;i<arr.length();i++){
-//                JSONObject obj = arr.getJSONObject(i);
-//                for(Object fieldName:obj.names()){
-//                    System.out.println(fieldName+" "+obj.get((String)fieldName));
-//                }
-//                System.out.println();
-//            }
-//        }
     }
 
     public static void main(String[] args) throws Exception{
@@ -249,14 +187,6 @@ public class TestJSON3 extends JSONObject implements IDataModel {
             
         TestJSON3 t = new TestJSON3(DataModel.getConnection());
   
-//        JSONArray a = t.getJSONArray(IDB.META);
-//        for(int i=0;i<a.length();i++){
-//            System.out.println(a.get(i));
-//        }
-//        
-//        JSONArray aa = t.getJSONArray("attributes");
-//        System.out.println(aa.toString());
-////        System.out.println(t.get("META"));
         t.check(t);
                     
     }

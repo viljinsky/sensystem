@@ -149,19 +149,18 @@ public class DB_JSON_decoder implements IDB{
         
         StringBuilder stringBuilder = new StringBuilder();
         
-//        meta = json.getJSONArray(IDB.META);
-        for(int i =0;i<meta.length();i++){
-            JSONObject obj = meta.getJSONObject(i);
-            String tableName = obj.getString("table_name");
-            JSONArray columns = obj.getJSONArray("columns");
-            stringBuilder.append(tableName).append("\n");
-            for(int column=0;column<columns.length();column++){
-                String columneName = columns.getString(column);
-                stringBuilder.append(columneName).append(" ");
-            }
-            stringBuilder.append("\n");
-        }
-//        json.remove(IDB.META);
+//        for(int i =0;i<meta.length();i++){
+//            JSONObject obj = meta.getJSONObject(i);
+//            String tableName = obj.getString("table_name");
+//            JSONArray columns = obj.getJSONArray("columns");
+//            stringBuilder.append(tableName).append("\n");
+//            for(int column=0;column<columns.length();column++){
+//                String columneName = columns.getString(column);
+//                stringBuilder.append(columneName).append(" ");
+//            }
+//            stringBuilder.append("\n");
+//        }
+        
         try{
             for(int i=0;i<meta.length();i++){
                 JSONObject obj = meta.getJSONObject(i);
