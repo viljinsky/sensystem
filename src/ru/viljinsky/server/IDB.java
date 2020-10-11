@@ -20,7 +20,7 @@ public interface IDB{
     
     
     
-    
+    public static final String META = "МЕТА";
     public static final String DAY_LIST = "day_list";
     public static final String BELL_LIST = "bell_list";
     public static final String DEPART = "depart";

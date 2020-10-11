@@ -22,8 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.Proc;
-import ru.viljinsky.project2019.replacement.ReplacementTab;
-import ru.viljinsky.server.MyServer;
+import ru.viljinsky.project2019.replacement.TestDocument;
 import ru.viljinsky.tcp.CommandBar;
 import ru.viljinsky.tcp.MainHTTP;
 import ru.viljinsky.tcp.MessagePane;
@@ -104,7 +103,7 @@ public class Client extends JPanel{
     void replacement() throws Exception{
         
         DataModel.setConnection(params.getString(SOURCE));
-        ReplacementTab replacemetTab = new ReplacementTab();
+        TestDocument replacemetTab = new TestDocument();
         replacemetTab.showInFrame();
         Proc.query(con->{
             replacemetTab.open(con);
@@ -165,7 +164,7 @@ public class Client extends JPanel{
     }
     
     MessagePane messagePane = new MessagePane();
-    CommandBar commandBar = new CommandBar(TEST,SEND,SAVE,CLEAR,null,START,null){
+    CommandBar commandBar = new CommandBar(TEST,SEND,SAVE,CLEAR,null,START,REPACEMENT,null){
 
         @Override
         public void doCommand(String command) {

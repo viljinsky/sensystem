@@ -24,57 +24,48 @@ import ru.viljinsky.server.IDB;
  * @author viljinsky
  */
 public class DB_JSON_encoder extends JSONObject implements IDataModel {
+
+    JSONArray meta = new JSONArray();
     
+    public void addMeta(Recordset recordset){
+        JSONObject obj = new JSONObject();
+        obj.put("table_name", recordset.getName());
+        obj.put("columns", new JSONArray(recordset.columns));
+        meta.put(obj);
+    };
 
     public DB_JSON_encoder(Connection con) throws Exception{
         DB db = new DB(con);
         
-        put(IDB.DEPART, recordsetToJSON(db.depart().select(DEPART_ID,DEPART_LABEL)));
-        put(IDB.TEACHER, recordsetToJSON(db.teacher().select(TEACHER_ID,LAST_NAME)));
-        put(IDB.ROOM, recordsetToJSON(db.room().select(ROOM_ID,ROOM_NAME)));
-        put(IDB.SUBJECT, recordsetToJSON(db.subject().select(SUBJECT_ID,SUBJECT_NAME,COLOR)));
-        put(IDB.BUILDING,recordsetToJSON(db.building().select(BUILDING_ID,BUILDING_NAME))) ;
+        recordsetToJSON(IDB.DEPART,db.depart().select(DEPART_ID,DEPART_LABEL));
+        recordsetToJSON(IDB.TEACHER,db.teacher().select(TEACHER_ID,LAST_NAME));
+        recordsetToJSON(IDB.ROOM,db.room().select(ROOM_ID,ROOM_NAME));
+        recordsetToJSON(IDB.SUBJECT,db.subject().select(SUBJECT_ID,SUBJECT_NAME,COLOR));
+        recordsetToJSON(IDB.BUILDING,db.building().select(BUILDING_ID,BUILDING_NAME)) ;        
+        recordsetToJSON(IDB.BELL_LIST,db.bell_list().select(BELL_ID,TIME_START,TIME_END));
+        recordsetToJSON(IDB.DAY_LIST,db.day_list().select(DAY_ID,DAY_NAME));        
+        recordsetToJSON(IDB.SCHEDULE,db.query(IDB.SQL_SCHEDULE));
+        recordsetToJSON(IDB.REPLACEMENT,db.query(IDB.SQL_REPLACEMENT));        
+        recordsetToJSON(IDB.GROUP_LABEL,db.query("select * from v_subject_group_label"));        
+        recordsetToJSON(IDB.ATTRIBUTES,db.attr(DATE_END,DATE_BEGIN,SCHEDULE_TYTLE,EDUCATIONAL_INSTITUTION));
         
-        put(IDB.BELL_LIST, recordsetToJSON(db.bell_list().select(BELL_ID,TIME_START,TIME_END)));
-        put(IDB.DAY_LIST, recordsetToJSON(db.day_list().select(DAY_ID,DAY_NAME)));
-        
-//        put("shift", recordsetToJSON(db.shift()));
-//        put("shift_detail", recordsetToJSON(db.shift_detail()));
-//        put("shift_type", recordsetToJSON(db.shift_type()));
-        
-        put(IDB.SCHEDULE, recordsetToJSON(db.query(IDB.SQL_SCHEDULE)));//db.query("select schedule.*,schedule.bell_id -(select min(bell_id) from shift_detail inner join depart using(shift_id)  where depart_id=schedule.depart_id )+1 as lesson_no from schedule")));
-
-//        put("curriculum", recordsetToJSON(db.curriculum()));
-//        put("curiculum_detail", recordsetToJSON(db.curriculum_detail()));
-//        put("subject_group",recordsetToJSON(db.subject_group()));
-        
-        put(IDB.REPLACEMENT,recordsetToJSON(db.query(IDB.SQL_REPLACEMENT)));//db.query("select a.date,a.day_id,a.bell_id,a.depart_id,a.group_id,a.subject_id,a.teacher_id,a.room_id,b.flag,a.journal_id,a.detail_id,b.parent_id from journal_detail a inner join journal b")));
-        
-        put(IDB.GROUP_LABEL,recordsetToJSON(db.query("select * from v_subject_group_label")));
-        
-        put(IDB.ATTRIBUTES,recordsetToJSON(db.attr(DATE_END,DATE_BEGIN,SCHEDULE_TYTLE,EDUCATIONAL_INSTITUTION)));
+        put(IDB.META, meta);
         
     }
             
-    private JSONArray recordsetToJSON(Recordset recordset){
+    private void recordsetToJSON(String tableName,Recordset recordset){
+        recordset.setName(tableName);
+        addMeta(recordset);
         List<JSONObject> list = new ArrayList<>();
-        if(!recordset.isEmpty()){
-            for(Iterator<Values> it= recordset.getIterator();it.hasNext();){
-                JSONObject jObj = new JSONObject();
-                Values values = it.next();
-                for(String key:values.keySet()){
-                    jObj.put(key, values.get(key));
-                }
-                list.add(jObj);
+        for(Iterator<Values> it= recordset.getIterator();it.hasNext();){
+            JSONObject jObj = new JSONObject();
+            Values values = it.next();
+            for(String key:values.keySet()){
+                jObj.put(key, values.get(key));
             }
-        } else {
-            JSONObject obj = new JSONObject();
-            for(String s:recordset.columns){
-                obj.put(s, NULL);
-            }
-            list.add(obj);
+            list.add(jObj);
         }
-        return new JSONArray(list);
+        put(tableName, new JSONArray(list));
     }
     
     public void parceValues(JSONObject obj){
@@ -101,7 +92,13 @@ public class DB_JSON_encoder extends JSONObject implements IDataModel {
     public static void main(String[] args) throws Exception{
         DataModel.setConnection("Моё расписание.db");
         DB_JSON_encoder t = new DB_JSON_encoder(DataModel.getConnection());
-        t.parce(t.toString());        
+        
+        JSONArray a = t.getJSONArray(IDB.META);
+        for(int i=0;i<a.length();i++){
+            System.out.println(a.get(i));
+        }
+        
+//        t.parce(t.toString());        
     }
     
 }

@@ -10,8 +10,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import ru.viljinsky.project2019.Recordset;
@@ -23,32 +21,36 @@ import ru.viljinsky.project2019.Recordset;
 public class DB_JSON_decoder implements IDB{
 
     JSONObject json ;
-    
+    JSONArray meta;
+        
     void addValues(Recordset recordset,JSONObject obj){
-        boolean g = false;
         Object[] p = new Object[recordset.columns.length];
         for(int i=0;i<p.length;i++){
-            g = false;
             if (obj.has(recordset.columns[i])){
                 p[i] = obj.get(recordset.columns[i]);
-                if (!p[i].equals(null)){
-                    g = true;
-                }
             }
         }
-        if (g) {
-            recordset.add(p);
-        };
+        recordset.add(p);
     }
     
-    Recordset getRecordset(String name){
-        Recordset recordset = new Recordset();
-        JSONArray arr = json.getJSONArray(name);
-        Set<String> columns = new HashSet<>();
-        for(int i=0;i<arr.length();i++){
-            columns.addAll(arr.getJSONObject(i).keySet());
+    Recordset getRecordset(String name) throws Exception{
+        Recordset recordset = null;
+        for(int i=0;i<meta.length();i++){
+            JSONObject obj = meta.getJSONObject(i);
+            if (obj.has("table_name") && name.equals(obj.getString("table_name"))){
+                recordset = new Recordset();
+                JSONArray arr = obj.getJSONArray("columns");
+                String[] columns = new String[arr.length()];
+                for(int j=0;j<columns.length;j++){
+                    columns[j]=arr.getString(j);
+                }
+                recordset.columns = columns;
+                break;
+            }
         }
-        recordset.columns = columns.toArray(new String[columns.size()]);
+        if (recordset==null) throw new Exception("data "+name+" not found");
+        
+        JSONArray arr = json.getJSONArray(name);
         for(int i=0;i<arr.length();i++){            
             addValues(recordset,arr.getJSONObject(i));
         }
@@ -56,8 +58,14 @@ public class DB_JSON_decoder implements IDB{
         return recordset;
     }
     
-    public DB_JSON_decoder(JSONObject json) {
+    private void setJson(JSONObject json) throws Exception{
+        if (!json.has(IDB.META)) throw new Exception ("meta not found");
         this.json = json;
+        this.meta = json.getJSONArray(IDB.META);
+    }
+    
+    public DB_JSON_decoder(JSONObject json) throws Exception{
+        setJson(json);
     }
 
     public DB_JSON_decoder(File file) throws Exception{
@@ -65,17 +73,22 @@ public class DB_JSON_decoder implements IDB{
                 FileInputStream in = new FileInputStream(file);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in,"utf-8"));
                ){
-           json = new JSONObject(reader.readLine());
+           setJson(new JSONObject(reader.readLine()));
        }
     }
 
     public DB_JSON_decoder(String str)throws Exception {
-        json = new JSONObject(str);
+        setJson(new JSONObject(str));
     }
     
+    
     public void print(){
+        try{
         for(String s: json.keySet()){
             getRecordset(s).print();
+        }
+        } catch (Exception e){
+            System.out.println(e.getMessage());
         }
     }
     
@@ -130,50 +143,52 @@ public class DB_JSON_decoder implements IDB{
         return stringBuilder;
     }
     
+    
     @Override
     public String toString() {
+        
         StringBuilder stringBuilder = new StringBuilder();
-        for(String tableName: json.keySet()){
-            Recordset recordset = getRecordset(tableName);
-            stringBuilder.append(dump(tableName, recordset, 10));
-//            stringBuilder.append(tableName).append("\n");
-//            for(String columnName: recordset.columns){
-//                stringBuilder.append(tab(columnName)).append(" ");
-//            }
-//            stringBuilder.append("\n");
-//            for(int j=0;j<recordset.columnCount();j++){
-//                String s = "";
-//                for(int i=0;i<20;i++) s+="-";
-//                stringBuilder.append(s).append(" ");
-//            }
-//            
-//            stringBuilder.append("\n");
-//            
-//             for(Object[] p: recordset){
-//                for(Object c: p){
-//                    stringBuilder.append(tab(c)).append(" ");
-//                }
-//                stringBuilder.append("\n");
-//            }
-//            stringBuilder.append("\n");
+        
+//        meta = json.getJSONArray(IDB.META);
+        for(int i =0;i<meta.length();i++){
+            JSONObject obj = meta.getJSONObject(i);
+            String tableName = obj.getString("table_name");
+            JSONArray columns = obj.getJSONArray("columns");
+            stringBuilder.append(tableName).append("\n");
+            for(int column=0;column<columns.length();column++){
+                String columneName = columns.getString(column);
+                stringBuilder.append(columneName).append(" ");
+            }
+            stringBuilder.append("\n");
+        }
+//        json.remove(IDB.META);
+        try{
+            for(int i=0;i<meta.length();i++){
+                JSONObject obj = meta.getJSONObject(i);
+                Recordset r = getRecordset(obj.getString("table_name"));
+                stringBuilder.append(dump(obj.getString("table_name"),r,10));
+            }
+        } catch (Exception e){
+            stringBuilder.append(e.getMessage()).append("\n");
         }
         return stringBuilder.toString();
+        
     }
     
     
     @Override
     public Recordset day_list() throws Exception {
-        return getRecordset(DAY_LIST);//.select("day_id","day_name");
+        return getRecordset(DAY_LIST);
     }
 
     @Override
     public Recordset bell_list() throws Exception {
-        return getRecordset(BELL_LIST);//.select("bell_id","time_start","time_end");
+        return getRecordset(BELL_LIST);
     }
 
     @Override
     public Recordset depart() throws Exception {
-        return getRecordset(DEPART);//.select("depart_id","depart_label");
+        return getRecordset(DEPART);
     }
 
     @Override
