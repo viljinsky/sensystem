@@ -22,17 +22,20 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.Proc;
-import ru.viljinsky.project2019.replacement.TestDocument;
+import ru.viljinsky.project2019.replacement.ReplacementTab2;
 import ru.viljinsky.tcp.CommandBar;
 import ru.viljinsky.tcp.MainHTTP;
 import ru.viljinsky.tcp.MessagePane;
 import ru.viljinsky.tcp.MultipartUtility;
 
+interface  IClient{
+}
+        
 /**
  *
  * @author viljinsky
  */
-public class Client extends JPanel{
+public class Client extends JPanel implements IClient{
     
     public static final String SEND = "send";
     public static final String TEST = "json";
@@ -43,7 +46,7 @@ public class Client extends JPanel{
     public static final String REPACEMENT = "replacement";
     public static final String START = "start";
     
-    static final String CHARSET = "utf-8";
+    public static final String CHARSET = "utf-8";
     
     public static final String HOST = "host";
     public static final String LOGIN = "login";
@@ -103,10 +106,11 @@ public class Client extends JPanel{
     void replacement() throws Exception{
         
         DataModel.setConnection(params.getString(SOURCE));
-        TestDocument replacemetTab = new TestDocument();
-        replacemetTab.showInFrame();
+        ReplacementTab2 replacementTab = new ReplacementTab2();
+//     ReplacementTab2 replacemetTab = ReplacementTab2();
+        replacementTab.showInFrame();
         Proc.query(con->{
-            replacemetTab.open(con);
+            replacementTab.open(con);
         });
         
     }
@@ -152,7 +156,7 @@ public class Client extends JPanel{
         }
     }
     
-    class ConnectionParams extends ValuesPanel{
+    public static class ConnectionParams extends ValuesPanel{
         
 
         public ConnectionParams() {
