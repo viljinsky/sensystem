@@ -1,26 +1,4 @@
 depart
-depart_id depart_label 
-teacher
-teacher_id last_name 
-room
-room_id room_name 
-subject
-subject_id subject_name color 
-building
-building_id building_name 
-bell_list
-bell_id time_start time_end 
-day_list
-day_id day_name 
-schedule
-day_id bell_id depart_id subject_id group_id teacher_id room_id ready lesson_no week_id 
-replacement
-date day_id bell_id depart_id group_id subject_id teacher_id room_id flag journal_id detail_id parent_id lesson_no 
-group_label
-depart_id subject_id group_id group_key group_label 
-attributes
-param_name param_value 
-depart
 depart_id            depart_label         
 -------------------- -------------------- 
 1                    1 - а                

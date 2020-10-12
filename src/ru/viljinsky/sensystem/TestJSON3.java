@@ -15,7 +15,7 @@ import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
 import ru.viljinsky.project2019.data.DB;
 import ru.viljinsky.server.IDB;
-import ru.viljinsky.server.ReplRecordset;
+import ru.viljinsky.server.Changes;
 
 /**
  * SenSystem convertor
@@ -164,7 +164,7 @@ public class TestJSON3 extends JSONObject implements IDataModel {
         recordset = new JSonRecordset(r.select(DAY_ID,BELL_ID,DEPART_ID,SUBJECT_ID,GROUP_KEY,TEACHER_ID,ROOM_ID,WEEK_ID),values);
         addRecordset("schedules", recordset);
         
-        r = new ReplRecordset(con).left(db.group_label(),DEPART_ID,GROUP_ID,SUBJECT_ID).select(DAY_ID,BELL_ID,DEPART_ID,SUBJECT_ID,FLAG,ReplRecordset.NEW_SUBJECT_ID,ReplRecordset.NEW_TEACHER_ID,ReplRecordset.NEW_ROOM_ID,GROUP_KEY);
+        r = new Changes(con).left(db.group_label(),DEPART_ID,GROUP_ID,SUBJECT_ID).select(DATE,DAY_ID,BELL_ID,DEPART_ID,SUBJECT_ID,FLAG,Changes.NEW_SUBJECT_ID,Changes.NEW_TEACHER_ID,Changes.NEW_ROOM_ID,GROUP_KEY);
         values = new Values();
         values.put(GROUP_KEY, "depart_group_id");
         values.put(FLAG,"change_type");

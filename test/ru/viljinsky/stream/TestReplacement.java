@@ -6,7 +6,6 @@
 
 package ru.viljinsky.stream;
 
-import ru.viljinsky.server.ReplRecordset;
 import java.awt.BorderLayout;
 import java.sql.Connection;
 import javax.swing.JFrame;
@@ -17,6 +16,8 @@ import ru.viljinsky.project2019.Grid;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.Recordset;
+import ru.viljinsky.project2019.replacement.ReplacementTab2;
+import ru.viljinsky.server.Changes;
 
 
 
@@ -34,14 +35,14 @@ public class TestReplacement extends JPanel implements IDataModel{
     
     
     public void open(Connection con) throws Exception{
-        Recordset r = new ReplRecordset(con);
+        Recordset r = new Changes(con);
         grid.setRecordset(r);
     }
     
     
     public static void main(String[] args) throws Exception{
         DataModel.setConnection("моё расписание.db");
-        TestReplacement panel = new TestReplacement();
+        ReplacementTab2 panel = new ReplacementTab2();
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setContentPane(panel);
