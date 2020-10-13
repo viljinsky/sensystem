@@ -165,7 +165,7 @@ class ViewModel implements IDataModel{
         return vh.values;
     }
     
-    Recordset day_list,bell_list,depart,room,subject,group_label,schedule,replacement,building,teacher;
+    Recordset day_list,bell_list,depart,room,subject,group_label,schedule,building,teacher;
     Values attributes;
     
     ScheduleView view;
@@ -205,7 +205,7 @@ class ViewModel implements IDataModel{
         group_label = db.group_label();
         schedule = db.schedule();
         schedule = schedule.join(subject, SUBJECT_ID).join(depart, DEPART_ID).left(room, ROOM_ID).left(teacher, TEACHER_ID).left(group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
-        replacement = db.replacement().join(depart, DEPART_ID).join(subject, SUBJECT_ID).left(room, ROOM_ID).left(teacher,TEACHER_ID).left(group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
+//        replacement = db.replacement().join(depart, DEPART_ID).join(subject, SUBJECT_ID).left(room, ROOM_ID).left(teacher,TEACHER_ID).left(group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
         attributes = new Values();
         for(Values values: db.attributes().toValues()){
             attributes.put(values.getString(PARAM_NAME),values.get(PARAM_VALUE));
@@ -230,16 +230,17 @@ class ViewModel implements IDataModel{
     
     // Список изменений на период
     private Recordset weekReplacement(Date date1,Date date2) throws Exception{
-        Recordset tmp = new Recordset(replacement);
-        int index = tmp.columnIndex(DATE);
-        for(Object p[] : replacement){
-            Date d = new SimpleDateFormat("yyyy-MM-dd").parse((String)p[index]);
-            if (d.before(date1) || d.after(date2)){
-                continue;
-            }
-            tmp.add(p);      
-        }
-        return tmp;
+//        Recordset tmp = new Recordset(replacement);
+//        int index = tmp.columnIndex(DATE);
+//        for(Object p[] : replacement){
+//            Date d = new SimpleDateFormat("yyyy-MM-dd").parse((String)p[index]);
+//            if (d.before(date1) || d.after(date2)){
+//                continue;
+//            }
+//            tmp.add(p);      
+//        }
+//        return tmp;
+        return null;
     }
     
     
@@ -258,7 +259,7 @@ class ViewModel implements IDataModel{
         day_id = day_id==1?day_id=7:day_id-1;
         c.add(Calendar.DAY_OF_MONTH, 6);
         Date date2 = c.getTime();
-        Recordset tmp = weekReplacement(date1,date2);
+//        Recordset tmp = weekReplacement(date1,date2);
         
         view.clearItems();
         Rectangle r = null;
@@ -284,14 +285,14 @@ class ViewModel implements IDataModel{
             }
         }
         
-        for(Iterator<Values> it = tmp.getIterator();it.hasNext();){
-            Values values = it.next();
-            Cell cell = findCell(values);
-            if (cell!=null){
-                values.put(COLOR, "255 0 0");
-                cell.addItem(view.createItem(values));
-            }
-        }
+//        for(Iterator<Values> it = tmp.getIterator();it.hasNext();){
+//            Values values = it.next();
+//            Cell cell = findCell(values);
+//            if (cell!=null){
+//                values.put(COLOR, "255 0 0");
+//                cell.addItem(view.createItem(values));
+//            }
+//        }
         System.out.println("week_id ->"+week_id);
         
         view.rebuild();

@@ -215,10 +215,18 @@ public class DB_JSON_decoder implements IDB{
         return getRecordset(SCHEDULE);
     }
 
+    
+//    @Override
+//    public Recordset replacement() throws Exception {
+//        return getRecordset(REPLACEMENT);
+//    }
+
     @Override
-    public Recordset replacement() throws Exception {
-        return getRecordset(REPLACEMENT);
+    public Recordset changes() throws Exception {
+        return getRecordset(CHANGES);
     }
+    
+    
 
     @Override
     public Recordset group_label() throws Exception {

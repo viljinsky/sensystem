@@ -45,9 +45,10 @@ public class DB_JSON_encoder extends JSONObject implements IDataModel {
         recordsetToJSON(IDB.BELL_LIST,db.bell_list().select(BELL_ID,TIME_START,TIME_END));
         recordsetToJSON(IDB.DAY_LIST,db.day_list().select(DAY_ID,DAY_NAME));        
         recordsetToJSON(IDB.SCHEDULE,db.query(IDB.SQL_SCHEDULE));
-        recordsetToJSON(IDB.REPLACEMENT,db.query(IDB.SQL_REPLACEMENT));        
+//        recordsetToJSON(IDB.REPLACEMENT,db.query(IDB.SQL_REPLACEMENT));        
         recordsetToJSON(IDB.GROUP_LABEL,db.query("select * from v_subject_group_label"));        
         recordsetToJSON(IDB.ATTRIBUTES,db.attr(DATE_END,DATE_BEGIN,SCHEDULE_TYTLE,EDUCATIONAL_INSTITUTION));
+        recordsetToJSON(IDB.CHANGES, db.changes());
         
         put(IDB.META, meta);
         

@@ -66,8 +66,8 @@ public class DB_SQLITE implements IDB,IDataModel{
     }
 
     @Override
-    public Recordset replacement() throws Exception {
-        return db.query(SQL_REPLACEMENT);
+    public Recordset changes() throws Exception {
+        return db.changes();
     }
 
     @Override

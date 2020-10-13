@@ -91,10 +91,11 @@ public class MyServer extends JPanel implements IDataModel{
         @Override
         public String responce(HttpRequest request) {
             try{
+                
                 db = new DB_JSON_decoder(request.paramByName("data"));
+                
                 scheduleView.open(db);
-                
-                
+                                
                 saveJson();
                 
             } catch (Exception e){

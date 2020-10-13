@@ -32,6 +32,7 @@ public interface IDB{
     public static final String REPLACEMENT = "replacement";
     public static final String GROUP_LABEL = "group_label";
     public static final String ATTRIBUTES = "attributes";
+    public static final String CHANGES = "changes";
     
     public Recordset day_list() throws Exception;
     public Recordset bell_list() throws Exception;
@@ -41,7 +42,7 @@ public interface IDB{
     public Recordset building() throws Exception;
     public Recordset subject() throws Exception;
     public Recordset schedule() throws Exception;        
-    public Recordset replacement() throws Exception;
+    public Recordset changes() throws Exception;
     public Recordset group_label() throws Exception;
     public Recordset attributes() throws Exception;
        

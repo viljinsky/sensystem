@@ -15,7 +15,7 @@ import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
 import ru.viljinsky.project2019.data.DB;
 import ru.viljinsky.server.IDB;
-import ru.viljinsky.server.Changes;
+import ru.viljinsky.project2019.replacement.Document.Changes;
 
 /**
  * SenSystem convertor

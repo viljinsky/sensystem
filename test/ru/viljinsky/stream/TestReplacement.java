@@ -16,8 +16,8 @@ import ru.viljinsky.project2019.Grid;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.Recordset;
+import ru.viljinsky.project2019.replacement.Document.Changes;
 import ru.viljinsky.project2019.replacement.ReplacementTab2;
-import ru.viljinsky.server.Changes;
 
 
 
