@@ -14,12 +14,12 @@ import ru.viljinsky.project2019.Recordset;
  */
 public interface IDB{
     
-    static final String SQL_SCHEDULE = "select schedule.*,schedule.bell_id - (select min(bell_id) from shift_detail inner join depart using (shift_id) where depart_id=schedule.depart_id) + 1  as lesson_no ,subject_group.week_id\n" +
-        "from schedule inner join subject_group using(depart_id,group_id,subject_id)";
-    static final String SQL_REPLACEMENT = "select a.date,a.day_id,a.bell_id,a.depart_id,a.group_id,a.subject_id,a.teacher_id,a.room_id,b.flag,a.journal_id,a.detail_id,b.parent_id,22 as lesson_no from journal_detail a inner join journal b using(journal_id)";
+    static final String SQL_SCHEDULE = "select null as date, s.day_id,s.bell_id,s.depart_id,s.group_id,s.subject_id,s.teacher_id,s.room_id,null as flag ,subject_group.week_id,s.bell_id - (select min(bell_id) from shift_detail inner join depart using (shift_id) where depart_id=s.depart_id) + 1  as lesson_no\n" +
+        "from schedule s inner join subject_group using(depart_id,group_id,subject_id)";
     
-    
-    
+    public static final String TABLE_NAME = "table_name";
+    public static final String COLUMNS = "columns";
+        
     public static final String META = "МЕТА";
     public static final String DAY_LIST = "day_list";
     public static final String BELL_LIST = "bell_list";

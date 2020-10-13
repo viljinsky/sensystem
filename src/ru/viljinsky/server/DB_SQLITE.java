@@ -10,7 +10,6 @@ import java.sql.Connection;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.data.DB;
-import ru.viljinsky.server.IDB;
 
 /**
  *
@@ -24,7 +23,6 @@ public class DB_SQLITE implements IDB,IDataModel{
         db = new DB(con);
     }
     
-
     @Override
     public Recordset day_list() throws Exception {
         return db.day_list().select(DAY_ID,DAY_NAME);

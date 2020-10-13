@@ -17,7 +17,6 @@ import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
 import ru.viljinsky.project2019.data.DB;
-import ru.viljinsky.server.IDB;
 
 /**
  *
@@ -29,8 +28,8 @@ public class DB_JSON_encoder extends JSONObject implements IDataModel {
     
     public void addMeta(Recordset recordset){
         JSONObject obj = new JSONObject();
-        obj.put("table_name", recordset.getName());
-        obj.put("columns", new JSONArray(recordset.columns));
+        obj.put(IDB.TABLE_NAME, recordset.getName());
+        obj.put(IDB.COLUMNS, new JSONArray(recordset.columns));
         meta.put(obj);
     };
 
@@ -45,8 +44,7 @@ public class DB_JSON_encoder extends JSONObject implements IDataModel {
         recordsetToJSON(IDB.BELL_LIST,db.bell_list().select(BELL_ID,TIME_START,TIME_END));
         recordsetToJSON(IDB.DAY_LIST,db.day_list().select(DAY_ID,DAY_NAME));        
         recordsetToJSON(IDB.SCHEDULE,db.query(IDB.SQL_SCHEDULE));
-//        recordsetToJSON(IDB.REPLACEMENT,db.query(IDB.SQL_REPLACEMENT));        
-        recordsetToJSON(IDB.GROUP_LABEL,db.query("select * from v_subject_group_label"));        
+        recordsetToJSON(IDB.GROUP_LABEL,db.group_label().select(DEPART_ID,GROUP_ID,SUBJECT_ID,GROUP_LABEL));
         recordsetToJSON(IDB.ATTRIBUTES,db.attr(DATE_END,DATE_BEGIN,SCHEDULE_TYTLE,EDUCATIONAL_INSTITUTION));
         recordsetToJSON(IDB.CHANGES, db.changes());
         

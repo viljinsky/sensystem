@@ -37,9 +37,9 @@ public class DB_JSON_decoder implements IDB{
         Recordset recordset = null;
         for(int i=0;i<meta.length();i++){
             JSONObject obj = meta.getJSONObject(i);
-            if (obj.has("table_name") && name.equals(obj.getString("table_name"))){
+            if (obj.has(TABLE_NAME) && name.equals(obj.getString(TABLE_NAME))){
                 recordset = new Recordset();
-                JSONArray arr = obj.getJSONArray("columns");
+                JSONArray arr = obj.getJSONArray(COLUMNS);
                 String[] columns = new String[arr.length()];
                 for(int j=0;j<columns.length;j++){
                     columns[j]=arr.getString(j);
@@ -69,6 +69,7 @@ public class DB_JSON_decoder implements IDB{
     }
 
     public DB_JSON_decoder(File file) throws Exception{
+        if (!file.exists()) throw new Exception("file \""+file.getName()+"\" not found");
        try(
                 FileInputStream in = new FileInputStream(file);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in,"utf-8"));
@@ -164,8 +165,8 @@ public class DB_JSON_decoder implements IDB{
         try{
             for(int i=0;i<meta.length();i++){
                 JSONObject obj = meta.getJSONObject(i);
-                Recordset r = getRecordset(obj.getString("table_name"));
-                stringBuilder.append(dump(obj.getString("table_name"),r,10));
+                Recordset r = getRecordset(obj.getString(TABLE_NAME));
+                stringBuilder.append(dump(obj.getString(TABLE_NAME),r,10));
             }
         } catch (Exception e){
             stringBuilder.append(e.getMessage()).append("\n");
@@ -215,18 +216,10 @@ public class DB_JSON_decoder implements IDB{
         return getRecordset(SCHEDULE);
     }
 
-    
-//    @Override
-//    public Recordset replacement() throws Exception {
-//        return getRecordset(REPLACEMENT);
-//    }
-
     @Override
     public Recordset changes() throws Exception {
         return getRecordset(CHANGES);
     }
-    
-    
 
     @Override
     public Recordset group_label() throws Exception {
@@ -239,7 +232,7 @@ public class DB_JSON_decoder implements IDB{
     }
     
     public static void main(String[] args) throws Exception{
-        File f = new File("server_data.json");
+        File f = new File(MyServer.SERVER_DATA);
         
         IDB db = new DB_JSON_decoder(f);
         System.out.println(db);

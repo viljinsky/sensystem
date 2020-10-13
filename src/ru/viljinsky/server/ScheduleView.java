@@ -12,7 +12,6 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -31,12 +30,15 @@ import ru.viljinsky.calendars.CalendarView;
 import ru.viljinsky.cells7.Cell;
 import ru.viljinsky.cells7.Item;
 import ru.viljinsky.cells7.View;
-import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
-import ru.viljinsky.server.IDB;
+import ru.viljinsky.project2019.replacement.IReplacement;
+import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_CANCEL;
+import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_MOVE_FROM;
+import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_MOVE_TO;
+import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_REPLACE;
 import ru.viljinsky.tcp.CommandBar;
 
 /**
@@ -136,6 +138,8 @@ class ScheduleViewControl extends JPanel implements IDataModel{
         calendarView.setPeriod(date1, date2);
     }
 }
+interface IViewModel{
+}
 
 class ViewModel implements IDataModel{
 
@@ -165,7 +169,7 @@ class ViewModel implements IDataModel{
         return vh.values;
     }
     
-    Recordset day_list,bell_list,depart,room,subject,group_label,schedule,building,teacher;
+    Recordset day_list,bell_list,depart,room,subject,group_label,schedule,changes,building,teacher;
     Values attributes;
     
     ScheduleView view;
@@ -203,9 +207,8 @@ class ViewModel implements IDataModel{
         subject = db.subject();
         room = db.room();
         group_label = db.group_label();
+        changes = db.changes();
         schedule = db.schedule();
-        schedule = schedule.join(subject, SUBJECT_ID).join(depart, DEPART_ID).left(room, ROOM_ID).left(teacher, TEACHER_ID).left(group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
-//        replacement = db.replacement().join(depart, DEPART_ID).join(subject, SUBJECT_ID).left(room, ROOM_ID).left(teacher,TEACHER_ID).left(group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
         attributes = new Values();
         for(Values values: db.attributes().toValues()){
             attributes.put(values.getString(PARAM_NAME),values.get(PARAM_VALUE));
@@ -227,73 +230,42 @@ class ViewModel implements IDataModel{
         }
         view.rebuild();
     }
-    
-    // Список изменений на период
-    private Recordset weekReplacement(Date date1,Date date2) throws Exception{
-//        Recordset tmp = new Recordset(replacement);
-//        int index = tmp.columnIndex(DATE);
-//        for(Object p[] : replacement){
-//            Date d = new SimpleDateFormat("yyyy-MM-dd").parse((String)p[index]);
-//            if (d.before(date1) || d.after(date2)){
-//                continue;
-//            }
-//            tmp.add(p);      
-//        }
-//        return tmp;
-        return null;
-    }
-    
-    
+        
     public void setDate(Date date) throws Exception{
         setDate(new SimpleDateFormat("yyyy-MM-dd").format(date));
     }
-    
-    
-    public void setDate(String str) throws Exception{
-        Date date = new SimpleDateFormat("yyyy-MM-dd").parse(str);
-        Date date1 = date ;
-        Calendar c = Calendar.getInstance();
-        c.setTime(date1);
-        int week_id = 2 - c.get(Calendar.WEEK_OF_YEAR) % 2;
-        Integer day_id = c.get(Calendar.DAY_OF_WEEK);
-        day_id = day_id==1?day_id=7:day_id-1;
-        c.add(Calendar.DAY_OF_MONTH, 6);
-        Date date2 = c.getTime();
-//        Recordset tmp = weekReplacement(date1,date2);
         
-        view.clearItems();
-        Rectangle r = null;
+    public void setDate(String str) throws Exception{
+
+        // Закголовки строк
+        Date date = new SimpleDateFormat("yyyy-MM-dd").parse(str);
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        c.set(Calendar.DAY_OF_WEEK,Calendar.MONDAY);
         for(int row=0;row<view.rowCount();row++){
             ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);
             if (vh.values.containsKey(DAY_ID) && !vh.values.containsKey(BELL_ID)){
                 c.setTime(date);
                 c.add(Calendar.DAY_OF_MONTH, vh.values.getInteger(DAY_ID)-1);
                 vh.caption = new SimpleDateFormat("E dd MMM").format(c.getTime());
-                if (day_id.equals(vh.values.get(DAY_ID))){
-                    r = view.cell(1,row).bound;
-                }
             }            
         }
+                
+        // Заполнение сетки
+        Recordset recordset = new ScheduleRecordset(schedule, changes,date)
+                .join(subject, SUBJECT_ID).join(depart, DEPART_ID).left(room, ROOM_ID).left(teacher, TEACHER_ID).left(group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
         
-        for(Iterator<Values> it = schedule.getIterator();it.hasNext();){
+        view.clearItems();
+        for(Iterator<Values> it=recordset.getIterator();it.hasNext();){
             Values values = it.next();
-                if (values.getInteger(WEEK_ID)==0 || values.getInteger(WEEK_ID)==week_id){
-                Cell cell = findCell(values);
-                if (cell!=null){
-                    cell.addItem(view.createItem(values));
-                }
-            }
+        
+            Cell cell = findCell(values);
+            if (cell!=null){
+                cell.addItem(view.createItem(values));
+            
+            }        
         }
         
-//        for(Iterator<Values> it = tmp.getIterator();it.hasNext();){
-//            Values values = it.next();
-//            Cell cell = findCell(values);
-//            if (cell!=null){
-//                values.put(COLOR, "255 0 0");
-//                cell.addItem(view.createItem(values));
-//            }
-//        }
-        System.out.println("week_id ->"+week_id);
         
         view.rebuild();
         
@@ -361,12 +333,14 @@ public class ScheduleView extends View implements IDataModel{
         String room_name;
         String subject_name;
         Color color;
+        int flag;
         int lesson_no;
         String hint;
 
         public ScheduleItem(Values data) {
             super(data);
 //            depart_label = data.getString(DEPART_LABEL);
+            flag = data.isValue(FLAG)?data.getInteger(FLAG):-1;
             group_label = data.getString(GROUP_LABEL);
             room_name = data.getString(ROOM_NAME);
             subject_name = data.getString(SUBJECT_NAME);
@@ -380,12 +354,29 @@ public class ScheduleView extends View implements IDataModel{
         @Override
         public void draw(Graphics g) {
             if (bound!=null){
-                g.setColor(color);
-                g.fillRect(bound.x, bound.y, bound.width, bound.height);
-                g.setColor(Color.BLACK);
+                if (flag == FLAG_CANCEL || flag == IReplacement.FLAG_MOVE_TO){
+                    g.setColor(Color.WHITE);
+//                    g.setFont(g.getFont().deriveFont(Font.ITALIC));
+                } else
+                    g.setColor(color);
+                    
+                g.fillRect(bound.x, bound.y, bound.width-1, bound.height-1);
                 FontMetrics fm = g.getFontMetrics();
 //                int x = bound.x;
                 int y = (bound.height-fm.getHeight())/2+fm.getHeight()-fm.getDescent();
+                
+                switch(flag){
+                    case FLAG_CANCEL:
+                    case FLAG_MOVE_TO:
+                        g.setColor(Color.LIGHT_GRAY);
+                        break;
+                    case FLAG_REPLACE:
+                    case FLAG_MOVE_FROM:    
+                        g.setColor(Color.RED);
+                        break;
+                    default:
+                        g.setColor(Color.BLACK);
+                }
                 
                 g.drawString(lesson_no+".", bound.x+5, bound.y+y);
                 

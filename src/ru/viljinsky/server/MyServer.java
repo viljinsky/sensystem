@@ -32,6 +32,8 @@ import ru.viljinsky.tcp.HttpServer;
  */
 public class MyServer extends JPanel implements IDataModel{
     
+    public static final String SERVER_DATA = "server_data.json";
+                
     ScheduleView scheduleView;
             
     public static final String RELOAD = "reload";
@@ -44,11 +46,11 @@ public class MyServer extends JPanel implements IDataModel{
         }
     }
     
-    void saveJson() throws Exception{
+    void saveJson(String json) throws Exception{
         File file = new File(SERVER_DATA);
         try(FileOutputStream out = new FileOutputStream(file);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out,"utf-8"));){
-            writer.write(server.db.toString());
+            writer.write(json);
         }            
     }
     
@@ -58,7 +60,7 @@ public class MyServer extends JPanel implements IDataModel{
             try{
                 scheduleView.open(new DB_JSON_decoder(file));
             } catch (Exception e){
-//                e.printStackTrace();
+                e.printStackTrace();
             }
         }        
     }
@@ -96,7 +98,7 @@ public class MyServer extends JPanel implements IDataModel{
                 
                 scheduleView.open(db);
                                 
-                saveJson();
+                saveJson(request.paramByName("data"));
                 
             } catch (Exception e){
                 return "<p>Ошибка разбора</p>\n<p>"+e.getMessage()+"</p>\n";
@@ -126,8 +128,6 @@ public class MyServer extends JPanel implements IDataModel{
         
     };
     
-    static final String SERVER_DATA = "server_data.json";
-        
     void showMessage(String message){
         JOptionPane.showMessageDialog(getParent(), message);
     };
