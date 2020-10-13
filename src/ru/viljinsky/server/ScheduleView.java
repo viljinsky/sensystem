@@ -6,9 +6,7 @@
 
 package ru.viljinsky.server;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -23,15 +21,11 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
-import ru.viljinsky.calendars.CalendarView;
 import ru.viljinsky.cells7.Cell;
 import ru.viljinsky.cells7.Item;
 import ru.viljinsky.cells7.View;
 import ru.viljinsky.project2019.IDataModel;
-import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
 import ru.viljinsky.project2019.replacement.IReplacement;
@@ -39,17 +33,17 @@ import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_CANCEL;
 import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_MOVE_FROM;
 import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_MOVE_TO;
 import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_REPLACE;
-import ru.viljinsky.tcp.CommandBar;
 
 /**
  *
  * @author viljinsky
  */
 
-class StatusBar extends Container{
+class StatusBar extends JComponent{
     JLabel label = new JLabel("statusbar");
 
     public StatusBar() {
+        setBorder(BorderFactory.createEtchedBorder());
         setLayout(new FlowLayout(FlowLayout.LEFT, 12, 6));
         add(label);
     }
@@ -60,84 +54,6 @@ class StatusBar extends Container{
 
 }
 
-
-
-class ScheduleViewControl extends JPanel implements IDataModel{
-    
-    
-    
-    CommandBar commandBar = new CommandBar("RELOAD"){
-
-        @Override
-        public void doCommand(String command) {
-            try{
-                Proc.query(con->{
-                    IDB idb = new DB_SQLITE(con);
-                    view.open(idb);
-                    view.setDate(date);
-            });
-            } catch(Exception e){
-            }
-        }
-        
-    };
-    ScheduleView view;
-    CalendarView calendarView = new CalendarView(){
-
-        @Override
-        public void change() {
-            try{
-                Date date = getSelectionDate();
-                if(date!=null){
-                    ScheduleViewControl.this.setDate(date);
-                }
-            } catch (Exception e){
-            }
-        }
-        
-    };
-    JLabel label = new JLabel("date");
-
-    public ScheduleViewControl(ScheduleView panel){
-        view = panel;
-        view.control = this;
-        setLayout(new BorderLayout());
-        add(new JScrollPane(calendarView),BorderLayout.WEST);
-        add(new JScrollPane(view));
-        add(commandBar,BorderLayout.PAGE_END);
-        label.setBorder(new EmptyBorder(12,6, 12, 6));
-        add(label,BorderLayout.PAGE_START);
-    }
-    
-    Date date ;
-    int week_id;
-    
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    
-    SimpleDateFormat sdf2 = new SimpleDateFormat("E dd MMM yyyy");
-    
-    public void setDate(Date date) throws Exception{
-        setDate(sdf.format(date));
-    }
-    
-    public void setDate(String date) throws Exception{
-        this.date = sdf.parse(date);
-        Calendar c = Calendar.getInstance();
-        c.setTime(this.date);
-        this.week_id = c.get(Calendar.WEEK_OF_YEAR);
-        
-        label.setText(sdf2.format(this.date)+ "  ("+(week_id % 2 == 0?"Четная неделя":"Нечётная неделя")+")");
-        view.setDate(this.date);
-    }
-               
-    public void setPeriod(Values values){
-        setPeriod(values.getString(DATE_BEGIN),values.getString(DATE_END));
-    }
-    public void setPeriod(String date1,String date2){
-        calendarView.setMonth(date1, date2);
-        calendarView.setPeriod(date1, date2);
-    }
-}
 interface IViewModel{
 }
 
@@ -296,7 +212,6 @@ class ScheduleTitle extends JComponent implements IDataModel{
 
 public class ScheduleView extends View implements IDataModel{
     
-    ScheduleViewControl control;
     ScheduleTitle title = new ScheduleTitle();
     ViewModel model;
     
@@ -382,7 +297,8 @@ public class ScheduleView extends View implements IDataModel{
                 
                 g.drawString(subject_name +(group_label==null?"":group_label) , bound.x+20, bound.y+y);
                 
-                g.drawString(room_name, bound.x+(bound.width-40), bound.y+y);
+                if(room_name!=null)
+                    g.drawString(room_name, bound.x+(bound.width-40), bound.y+y);
                 
                 
             }
@@ -432,32 +348,16 @@ public class ScheduleView extends View implements IDataModel{
         
         model.open(idb);
         model.init();
-        if (control!=null){
-            control.setPeriod(model.attributes);
-            control.setDate(date);
-        } else {
-            model.setDate(date);
-        }
-        
-        setVisible(true);
-        
+        setVisible(true);        
         title.setValues(model.attributes);
         periodChange();
     }
             
-    public JComponent createControl(){
-        control = new ScheduleViewControl(this);
-        return control;
-    }
-    
-    
     public static void main(String[] args)throws Exception{
         
         ScheduleView view = new ScheduleView();
-        JComponent p = view.createControl();
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setContentPane(p);
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
