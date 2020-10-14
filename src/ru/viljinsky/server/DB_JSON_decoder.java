@@ -149,19 +149,6 @@ public class DB_JSON_decoder implements IDB{
     public String toString() {
         
         StringBuilder stringBuilder = new StringBuilder();
-        
-//        for(int i =0;i<meta.length();i++){
-//            JSONObject obj = meta.getJSONObject(i);
-//            String tableName = obj.getString("table_name");
-//            JSONArray columns = obj.getJSONArray("columns");
-//            stringBuilder.append(tableName).append("\n");
-//            for(int column=0;column<columns.length();column++){
-//                String columneName = columns.getString(column);
-//                stringBuilder.append(columneName).append(" ");
-//            }
-//            stringBuilder.append("\n");
-//        }
-        
         try{
             for(int i=0;i<meta.length();i++){
                 JSONObject obj = meta.getJSONObject(i);
@@ -230,14 +217,17 @@ public class DB_JSON_decoder implements IDB{
     public Recordset attributes() throws Exception {
         return getRecordset(ATTRIBUTES);
     }
-    
-    public static void main(String[] args) throws Exception{
-        File f = new File(MyServer.SERVER_DATA);
-        
-        IDB db = new DB_JSON_decoder(f);
-        System.out.println(db);
-        
+
+    @Override
+    public Recordset skill() throws Exception {
+        return getRecordset(SKILL);
     }
+
+    @Override
+    public Recordset curiculum() throws Exception {
+        return getRecordset(CURRICULUM);
+    }
+    
     
     
 }

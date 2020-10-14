@@ -77,5 +77,16 @@ public class DB_SQLITE implements IDB,IDataModel{
     public Recordset attributes() throws Exception {
         return db.attr();
     }
+
+    @Override
+    public Recordset skill() throws Exception {
+        return db.skill();
+    }
+
+    @Override
+    public Recordset curiculum() throws Exception {
+        return db.curriculum();
+    }
+    
     
 }

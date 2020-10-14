@@ -33,6 +33,8 @@ public interface IDB{
     public static final String GROUP_LABEL = "group_label";
     public static final String ATTRIBUTES = "attributes";
     public static final String CHANGES = "changes";
+    public static final String SKILL = "skill";
+    public static final String CURRICULUM = "curiculum"; 
     
     public Recordset day_list() throws Exception;
     public Recordset bell_list() throws Exception;
@@ -45,5 +47,7 @@ public interface IDB{
     public Recordset changes() throws Exception;
     public Recordset group_label() throws Exception;
     public Recordset attributes() throws Exception;
+    public Recordset skill() throws Exception;
+    public Recordset curiculum() throws Exception;
        
 } 

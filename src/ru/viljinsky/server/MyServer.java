@@ -8,21 +8,19 @@ package ru.viljinsky.server;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-import javax.swing.BorderFactory;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import ru.viljinsky.calendars.CalendarView;
-import ru.viljinsky.project2019.Grid;
 import ru.viljinsky.project2019.IDataModel;
+import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
 import ru.viljinsky.tcp.HttpRequest;
 import ru.viljinsky.tcp.HttpServer;
@@ -34,189 +32,147 @@ import ru.viljinsky.tcp.HttpServer;
 public class MyServer extends JPanel implements IDataModel{
     
     public static final String SERVER_DATA = "server_data.json";
-                
-    ScheduleView scheduleView;
-            
-    public static final String RELOAD = "reload";
         
-    void reload(){
-        try{
-            scheduleView.open(server.db);
-        } catch (Exception e){
-            showMessage(e.getMessage());
-        }
-    }
-    
-    void saveJson(String json) throws Exception{
-        File file = new File(SERVER_DATA);
-        try(FileOutputStream out = new FileOutputStream(file);
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out,"utf-8"));){
-            writer.write(json);
-        }            
-    }
-    
-    void readJson(){
-        File file = new File(SERVER_DATA);
-        if (file.exists()){
-            try{
-                scheduleView.open(new DB_JSON_decoder(file));
-            } catch (Exception e){
-                e.printStackTrace();
+    CalendarView calendarView = new CalendarView(){
+
+        @Override
+        public void change() {
+            Date date = getSelectionDate();
+            if(date!=null){
+                view.setDate(date);
             }
-        }        
+        }
+        
+    };
+    
+    ScheduleView view = new ScheduleView();
+    
+    public void open(String json) throws Exception{
+        open(new DB_JSON_decoder(json));
     }
     
-    class Server extends HttpServer{
+    public void open(IDB db) throws Exception{
+        view.open(db);
+        skillFilter.setValues(view.skill);
+        curriculumFilter.setValues(view.curriculum);
+        Recordset recordset = db.attributes();
+        Values values = new Values();
+        recordset.stream().forEach((p) -> {
+            values.put((String)p[0],p[1]);
+        });
+        calendarView.setMonth(values.getString(DATE_BEGIN),values.getString(DATE_END));
+        calendarView.setPeriod(values.getString(DATE_BEGIN),values.getString(DATE_END));
+        calendarView.setSelectionDate(new Date());
+//        view.setStatusTest("Данные обновлены "+new SimpleDateFormat("dd MMM yyyy HH:mm").format(new Date()));
         
-        DB_JSON_decoder db ;
-                
-        
-        public void afterLoaded() throws Exception{
-        }
+    }
+    
+    void setStatusText(String text){
+        view.statusBar.setStatusTest(text);
+    }
+    
+    
+    
+    HttpServer server = new HttpServer(){
+
 
         @Override
         public void onStop(HttpServer server) {
-            super.onStop(server); //To change body of generated methods, choose Tools | Templates.
-            scheduleView.setStatusTest("server stopped");
+            setStatusText("server stopped");
         }
 
         @Override
         public void onError(Exception e) {
-            super.onError(e); //To change body of generated methods, choose Tools | Templates.
+            setStatusText("server error "+e.getMessage());
         }
 
         @Override
         public void onStart(HttpServer server) {
-            super.onStart(server); //To change body of generated methods, choose Tools | Templates.
-            scheduleView.setStatusTest("server started");
+//            setStatusText("server started");
         }
 
         @Override
         public String responce(HttpRequest request) {
             try{
                 
-                db = new DB_JSON_decoder(request.paramByName("data"));
-                
-                scheduleView.open(db);
-                                
-                saveJson(request.paramByName("data"));
-                
-            } catch (Exception e){
-                return "<p>Ошибка разбора</p>\n<p>"+e.getMessage()+"</p>\n";
-            }
-            return "Всё хорошо";
-        }
-        
-    }
-        
-    
-    CalendarView calendarCells = new CalendarView(){
-
-        @Override
-        public void change() {
-            scheduleView.setDate(getSelectionDate());
-            
-        }
-        
-    };
-    
-    Server server = new Server(){
-
-        @Override
-        public void afterLoaded() throws Exception{
-            scheduleView.setStatusTest("Данные обновлены");
-        }
-        
-    };
-    
-    void showMessage(String message){
-        JOptionPane.showMessageDialog(getParent(), message);
-    };
-    
-    JFrame f ;
-    public void start(){
-        if (f==null){
-            f = new JFrame("Server 3345");
-            f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-            f.addWindowListener(new WindowAdapter() {
-
-                @Override
-                public void windowClosing(WindowEvent e) {   
-                    
-                    f.setVisible(false);
-                    f.dispose();
-                    f=null;
+                if (request.hasParamByName("data")){
+                    open(request.paramByName("data"));                
+                    File file=new File(SERVER_DATA);
+                    try(
+                            FileOutputStream out = new FileOutputStream(file);
+                            BufferedWriter write = new BufferedWriter(new OutputStreamWriter(out,"utf-8"));){
+                        write.write(request.paramByName("data"));
+                    }
+                       
                 }
-
-            });
-            f.setContentPane(this);
-            f.pack();
-            f.setLocationRelativeTo(null);
-        }
-        f.setVisible(true);
-    };
-    
-    Thread tread;
-    Grid grid = new Grid();
-
-    public MyServer(){
-        
-        scheduleView = new ScheduleView(){
-
-            @Override
-            public void periodChange() {
-                Values values = getPeriod();
-                calendarCells.setMonth(values.getString(DATE_BEGIN),values.getString(DATE_END));
-                calendarCells.setPeriod(values.getString(DATE_BEGIN),values.getString(DATE_END));
+                else     
+                    return "param data not found";
+                setStatusText("Данные обновлены "+new SimpleDateFormat("HH:mm dd MMM yyyy").format(new Date()));
+            } catch (Exception e){
+                return e.getMessage();
             }
-            
-        };
-        setLayout(new BorderLayout());
-        calendarCells.setBorder(BorderFactory.createEtchedBorder());
-        JPanel p = new JPanel(new BorderLayout());
-        p.add(calendarCells,BorderLayout.WEST);
-        p.add(new JScrollPane(scheduleView));
-        add(p);
-        add(scheduleView.title,BorderLayout.PAGE_START);
-        add(scheduleView.statusBar,BorderLayout.PAGE_END);
+            return "OK";
+        }
         
-        tread = new Thread(){
+    };
+
+    SkillFilter skillFilter = new SkillFilter(view);
+    CurriculumFilter curriculumFilter = new CurriculumFilter(view);
+    public MyServer() {
+        setPreferredSize(new Dimension(800,600));
+        setLayout(new BorderLayout());
+        add(calendarView,BorderLayout.WEST);
+        add(new JScrollPane(view));      
+        add(view.statusBar,BorderLayout.PAGE_END);
+        add(view.title,BorderLayout.PAGE_START);
+        view.title.add(new ViewControl(view));
+//        view.title.add(skillFilter);
+        view.title.add(curriculumFilter);
+    }
+    
+    public void showInFrame(){
+        
+        try{
+        File file = new File(SERVER_DATA);
+        if (file.exists()){
+            IDB db = new DB_JSON_decoder(file);
+            open(db);
+            setStatusText("Загружены локальные данные");
+        }
+        } catch (Exception e){
+        }
+        
+        JFrame frame = new JFrame();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(this);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        new Thread(){
 
             @Override
             public void run() {
                 try{
                     server.start(3345);
                 } catch (Exception e){
-                    showMessage(e.getMessage());
-                }
-            }
-
-        };
-        tread.start();
-        
-        setPreferredSize(new Dimension(800,600));
-
-        readJson();
-        }
-            
-    
-    public static void main(String[] args){
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                try{
-                    JFrame frame = new JFrame();
-                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    frame.setContentPane(new MyServer());
-                    frame.pack();
-                    frame.setLocationRelativeTo(null);
-                    frame.setVisible(true);
-                } catch (Exception e){
                     
                 }
             }
-        });
+            
+        }.start();
     }
+    
+    
+    public static void main(String[] args) throws Exception{
+        
+        SwingUtilities.invokeLater(() -> {
+            new MyServer().showInFrame();
+        });
+        
+       
+       
+    }
+    
+    
     
 }

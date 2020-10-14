@@ -8,7 +8,7 @@ package ru.viljinsky.stream;
 
 import ru.viljinsky.server.ScheduleRecordset;
 import java.awt.BorderLayout;
-import java.io.File;
+import java.awt.Dimension;
 import java.util.Date;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -21,10 +21,8 @@ import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
-import ru.viljinsky.server.DB_JSON_decoder;
 import ru.viljinsky.server.DB_SQLITE;
 import ru.viljinsky.server.IDB;
-import ru.viljinsky.server.MyServer;
 
 /**
  *
@@ -64,6 +62,7 @@ public class TestSchedule2 extends JPanel implements IDataModel{
     Grid grid1 = new Grid(),grid2 = new Grid();
 
     public TestSchedule2() {
+        setPreferredSize(new Dimension(1200,600));
         setLayout(new BorderLayout());
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,new JScrollPane(grid1),new JScrollPane(grid2));
         splitPane.setResizeWeight(.5);
@@ -91,6 +90,7 @@ public class TestSchedule2 extends JPanel implements IDataModel{
     
     public static void main(String[] args) throws Exception{
         TestSchedule2 panel = new TestSchedule2();
+        
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setContentPane(panel);

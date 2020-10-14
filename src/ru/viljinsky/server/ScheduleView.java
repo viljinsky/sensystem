@@ -10,19 +10,22 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.border.EmptyBorder;
-import ru.viljinsky.cells7.Cell;
 import ru.viljinsky.cells7.Item;
 import ru.viljinsky.cells7.View;
 import ru.viljinsky.project2019.IDataModel;
@@ -54,15 +57,138 @@ class StatusBar extends JComponent{
 
 }
 
+abstract class AbstractControl extends JComponent implements IDataModel{
+    
+    ScheduleView view;
+
+    public AbstractControl(ScheduleView view) {
+        this.view = view;
+        setLayout(new FlowLayout(FlowLayout.LEFT));
+    }
+    
+        
+    JButton createButton(String command){
+        Action a = new AbstractAction(command) {
+            
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doCommand(e.getActionCommand());
+            }
+        };
+                
+        JButton button = new JButton(a);
+        return button;
+    }
+    
+    abstract void doCommand(String command);
+}
+
+class SkillFilter extends AbstractControl{
+
+    public SkillFilter(ScheduleView view) {
+        super(view);
+    }
+
+    public void setValues(Recordset recordset){
+        removeAll();
+        for(int i=0;i<recordset.size();i++){
+            Values values = recordset.getValues(i);
+            add(createButton(values.getString(IDataModel.SKILL_NAME)));
+        }        
+    }
+       
+    
+    @Override
+    void doCommand(String command) {
+        System.out.println(command);
+    }
+}
+
+class CurriculumFilter extends AbstractControl{
+    
+    void valuesClick(Values values){
+        view.setDepartFilter(values);
+    }
+    
+    class ValuesButton extends JButton{
+        Values values;
+        public ValuesButton(String name,Values values) {
+            super(name);
+            this.values = values;
+            addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    valuesClick(values);
+                }
+            });
+        }
+    }
+    
+
+    public CurriculumFilter(ScheduleView view) {
+        super(view);
+    }
+    
+    public void setValues(Recordset recordset){
+        removeAll();
+        for(int i=0;i<recordset.size();i++){
+            Values values = recordset.getValues(i);
+            add(new ValuesButton((String)values.get(CURRICULUM_NAME),values.getValues(CURRICULUM_ID)));
+        }
+    }
+            
+
+    @Override
+    void doCommand(String command) {
+        System.out.println(command);
+    }
+}
+class ViewControl extends AbstractControl{
+    
+    public static final String MODEL1 = "model1";
+    public static final String MODEL2 = "model2";
+    public static final String MODEL3 = "model3";
+
+    public ViewControl(ScheduleView view) {
+        super(view);
+        add(createButton(MODEL1));
+        add(createButton(MODEL2));
+        add(createButton(MODEL3));
+    }
+    
+    @Override
+    void doCommand(String command){
+        System.out.println(command);
+        ViewModel model;
+        switch(command){
+            case MODEL1:
+                model = new Model1();
+                break;
+            case MODEL2:
+                model = new Model2();
+                break;
+            case MODEL3:
+                model = new Model3();
+                break;
+            default:
+                return;
+        }
+        view.setModel(model);
+    }
+    
+}
+
 class ScheduleTitle extends JComponent implements IDataModel{
     JLabel schedulePeriod = new JLabel("schedulePeriod");
 
     public ScheduleTitle() {
         setBorder(BorderFactory.createEtchedBorder());
-        setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
+        setLayout(new BoxLayout(this,BoxLayout.X_AXIS));
         schedulePeriod.setHorizontalAlignment(JLabel.CENTER);
         schedulePeriod.setBorder(new EmptyBorder(12,6,12,16));
         add(schedulePeriod);
+//        add(new ViewControl());
     }
     
     public void setValues(Values attributes){
@@ -74,256 +200,24 @@ class ScheduleTitle extends JComponent implements IDataModel{
     
 }
 
-
-
-interface ViewModel{
-    
-    static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    
-    public void open(IDB db) throws Exception;
-    public void init() throws Exception;
-    public void setDate(Date date) throws Exception;
-    public void setDate(String date) throws Exception;
-    public Values attributes();
-    
-}
-
-abstract class AbstractViewModel implements IDataModel,ViewModel{
-    ScheduleView view;
-    Recordset day_list,bell_list,depart,room,subject,group_label,schedule,changes,building,teacher;
-    Values attributes;
-
-    public AbstractViewModel() {
-    }
-            
-    public AbstractViewModel(ScheduleView view) {
-        this.view = view;
-    }
-    static class ValuesHeader{
-        String caption;
-        Values values;
-
-        public ValuesHeader(String caption,Values values) {
-            this.values=values;
-            this.caption = caption;
-        }
-
-        @Override
-        public String toString(){
-            return caption;
-        }
-
-    }
-    
-    @Override
-    public void open(IDB db) throws Exception{
-        teacher = db.teacher();
-        building = db.building();
-        day_list = db.day_list().select(DAY_ID,DAY_NAME);
-        bell_list = db.bell_list().select(BELL_ID,TIME_START,TIME_END);
-        depart = db.depart().select(DEPART_ID,DEPART_LABEL);
-        subject = db.subject();
-        room = db.room();
-        group_label = db.group_label();
-        changes = db.changes();
-        schedule = db.schedule();
-        attributes = new Values();
-        for(Values values: db.attributes().toValues()){
-            attributes.put(values.getString(PARAM_NAME),values.get(PARAM_VALUE));
-        }
-    }
-    
-    @Override
-    public Values attributes() {
-        return attributes;
-    }
-    
-    public Object getRowHeaderData(int row){
-        ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);
-        return vh.values;
-    }
-    
-    public Object getColumnHeaderData(int col){
-        ValuesHeader vh = (ValuesHeader)view.getColumnHeader(col);
-        return vh.values;
-    }
-    
-    
-    Cell findCell(Values values){
-        Values v = values.getValues(DAY_ID,BELL_ID);
-        int row;
-        for(row=0;row<view.rowCount();row++){
-            ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);
-            if (vh.values.equals(v)){
-                break;
-            }                 
-        }        
-        v = values.getValues(DEPART_ID);
-        int col;
-        for(col=0;col<view.columnCount();col++){
-            ValuesHeader vh = (ValuesHeader)view.getColumnHeader(col);
-            if (vh.values.equals(v)){
-                break;
-            }
-        }       
-        return view.cell(col,row);
-    }
-    
-}
-
-class Model2 extends AbstractViewModel{
-
-    public Model2(ScheduleView view) {
-        super(view);
-    }
-        
-    @Override
-    public void init() throws Exception {
-        view.setDimension(0, 0);
-        for (int col=0;col<day_list.size();col++){
-            view.addColumn(new ValuesHeader((String)day_list.get(col)[1],day_list.getValues(col).getValues(DAY_ID)));
-        }
-        
-        for(int row=0;row<bell_list.size();row++){
-            Values v = bell_list.getValues(row);
-            view.addRow(new ValuesHeader(v.getString(TIME_START),v.getValues(BELL_ID)));
-            for(int i=0;i<depart.size();i++){
-                Values v1 = depart.getValues(i);
-                v1.put(BELL_ID, v.get(BELL_ID));
-                view.addRow(new ValuesHeader(v1.getString(DEPART_LABEL),v1.getValues(BELL_ID,DEPART_ID)));
-            }
-        }
-        
-//        for(int i = 0;i<day_list.size();i++){
-//            view.addRow(new ValuesHeader((String)day_list.get(i)[1],day_list.getValues(i).getValues(DAY_ID)));
-//            for (int j=0;j<bell_list.size();j++){
-//                Values y = bell_list.getValues(j).getValues(BELL_ID);
-//                y.put(DAY_ID, day_list.get(i)[0]);
-//                view.addRow(new ValuesHeader((String)bell_list.get(j)[1],y));
-//            }
-//        }
-//        for(int col=0;col<depart.size();col++){
-//            view.addColumn(new ValuesHeader((String)depart.get(col)[1], depart.getValues(col).getValues(DEPART_ID)));
-//        }
-        view.rebuild();
-    }
-
-    @Override
-    Cell findCell(Values values) {
-        
-        int col;
-        for(col=0;col<view.columnCount();col++){
-            ValuesHeader vh = (ValuesHeader)view.getColumnHeader(col);
-            if (values.getValues(DAY_ID).equals(vh.values)){
-                break;
-            }
-        }
-        int row;
-        for(row=0;row<view.rowCount();row++){
-            ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);
-            if (values.getValues(DEPART_ID,BELL_ID).equals(vh.values)){
-                break;
-            }
-        }
-        return view.cell(col,row);
-    }
-    
-    
-
-    @Override
-    public void setDate(Date date) throws Exception {
-        setDate(SIMPLE_DATE_FORMAT.format(date));
-    }
-
-    @Override
-    public void setDate(String date) throws Exception {
-        
-        view.clearItems();
-        // Заполнение сетки
-        Recordset recordset = new ScheduleRecordset(schedule, changes,SIMPLE_DATE_FORMAT.parse(date))
-                .join(subject, SUBJECT_ID).join(depart, DEPART_ID).left(room, ROOM_ID).left(teacher, TEACHER_ID).left(group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
-        
-        
-        for(Iterator<Values> it = recordset.getIterator();it.hasNext();){
-            Values values = it.next();
-            Cell cell = findCell(values);
-            if (cell!=null){
-                cell.addItem(view.createItem(values));
-            }
-        }
-        view.rebuild();
-    }
-}
-
-class Model1 extends AbstractViewModel {
-
-    public Model1(ScheduleView view) {
-        super(view);
-    }
-
-    @Override
-    public void init(){
-        view.setDimension(0, 0);
-        for(int i = 0;i<day_list.size();i++){
-            view.addRow(new ValuesHeader((String)day_list.get(i)[1],day_list.getValues(i).getValues(DAY_ID)));
-            for (int j=0;j<bell_list.size();j++){
-                Values y = bell_list.getValues(j).getValues(BELL_ID);
-                y.put(DAY_ID, day_list.get(i)[0]);
-                view.addRow(new ValuesHeader((String)bell_list.get(j)[1],y));
-            }
-        }
-        for(int col=0;col<depart.size();col++){
-            view.addColumn(new ValuesHeader((String)depart.get(col)[1], depart.getValues(col).getValues(DEPART_ID)));
-        }
-        view.rebuild();
-    }
-        
-    @Override
-    public void setDate(Date date) throws Exception{
-        setDate(SIMPLE_DATE_FORMAT.format(date));
-    }
-        
-    @Override
-    public void setDate(String str) throws Exception{
-
-        // Закголовки строк
-        Date date = SIMPLE_DATE_FORMAT.parse(str);
-        Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        c.set(Calendar.DAY_OF_WEEK,Calendar.MONDAY);
-        for(int row=0;row<view.rowCount();row++){
-            ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);
-            if (vh.values.containsKey(DAY_ID) && !vh.values.containsKey(BELL_ID)){
-                c.setTime(date);
-                c.add(Calendar.DAY_OF_MONTH, vh.values.getInteger(DAY_ID)-1);
-                vh.caption = new SimpleDateFormat("E dd MMM").format(c.getTime());
-            }            
-        }
-                
-        // Заполнение сетки
-        Recordset recordset = new ScheduleRecordset(schedule, changes,date)
-                .join(subject, SUBJECT_ID).join(depart, DEPART_ID).left(room, ROOM_ID).left(teacher, TEACHER_ID).left(group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
-        
-        view.clearItems();
-        for(Iterator<Values> it=recordset.getIterator();it.hasNext();){
-            Values values = it.next();
-        
-            Cell cell = findCell(values);
-            if (cell!=null){
-                cell.addItem(view.createItem(values));
-            
-            }        
-        }
-        
-        
-        view.rebuild();
-        
-    }
-    
-}
-
-
 public class ScheduleView extends View implements IDataModel{
+    
+    Values departFilter = null;//new Values(CURRICULUM_ID,1);
+    
+    public void setDepartFilter(Values filter){
+        departFilter = filter;
+        try{
+            model.init();
+            model.setDate(date);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        
+    }
+    
+    Recordset day_list,bell_list,depart,room,subject,group_label,schedule,changes,building,teacher,skill,curriculum;
+    Values attributes;
+    
     
     ScheduleTitle title = new ScheduleTitle();
     ViewModel model;
@@ -408,7 +302,7 @@ public class ScheduleView extends View implements IDataModel{
                 
                 g.drawString(lesson_no+".", bound.x+5, bound.y+y);
                 
-                g.drawString(subject_name +(group_label==null?"":group_label) , bound.x+20, bound.y+y);
+                g.drawString(subject_name +(group_label==null?"":" "+group_label) , bound.x+20, bound.y+y);
                 
                 if(room_name!=null)
                     g.drawString(room_name, bound.x+(bound.width-40), bound.y+y);
@@ -441,7 +335,8 @@ public class ScheduleView extends View implements IDataModel{
         setRowHeaderWidth(120);
         setRowHeight(20);
         setColumnWidth(200);
-        this.model = new Model2(this);
+        this.model = new Model1();
+        
         
     }
     
@@ -454,6 +349,13 @@ public class ScheduleView extends View implements IDataModel{
     
     public void setModel(ViewModel model){
         this.model = model;
+        try{
+            model.setView(this);
+            model.init();
+            model.setDate(date);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
     
     public void periodChange(){
@@ -463,11 +365,27 @@ public class ScheduleView extends View implements IDataModel{
         return model.attributes();
     }
     
-    public void open(IDB idb) throws Exception{
+    public void open(IDB db) throws Exception{
         
         setVisible(false);
-        
-        model.open(idb);
+        model.setView(this);
+        teacher = db.teacher();
+        building = db.building();
+        day_list = db.day_list().select(DAY_ID,DAY_NAME);
+        bell_list = db.bell_list().select(BELL_ID,TIME_START,TIME_END);
+        depart = db.depart();//.select(DEPART_ID,DEPART_LABEL);
+        subject = db.subject();
+        room = db.room();
+        group_label = db.group_label();
+        changes = db.changes();
+        schedule = db.schedule();
+        attributes = new Values();
+        for(Values values: db.attributes().toValues()){
+            attributes.put(values.getString(PARAM_NAME),values.get(PARAM_VALUE));
+        }
+        skill = db.skill();
+        curriculum = db.curiculum();
+//        model.open(idb);
         model.init();
         setVisible(true);        
         title.setValues(model.attributes());

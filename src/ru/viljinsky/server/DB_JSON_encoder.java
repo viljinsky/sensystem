@@ -36,7 +36,7 @@ public class DB_JSON_encoder extends JSONObject implements IDataModel {
     public DB_JSON_encoder(Connection con) throws Exception{
         DB db = new DB(con);
         
-        recordsetToJSON(IDB.DEPART,db.depart().select(DEPART_ID,DEPART_LABEL));
+        recordsetToJSON(IDB.DEPART,db.depart().select(DEPART_ID,DEPART_LABEL,SKILL_ID,CURRICULUM_ID,SHIFT_ID));
         recordsetToJSON(IDB.TEACHER,db.teacher().select(TEACHER_ID,LAST_NAME));
         recordsetToJSON(IDB.ROOM,db.room().select(ROOM_ID,ROOM_NAME));
         recordsetToJSON(IDB.SUBJECT,db.subject().select(SUBJECT_ID,SUBJECT_NAME,COLOR));
@@ -47,6 +47,8 @@ public class DB_JSON_encoder extends JSONObject implements IDataModel {
         recordsetToJSON(IDB.GROUP_LABEL,db.group_label().select(DEPART_ID,GROUP_ID,SUBJECT_ID,GROUP_LABEL));
         recordsetToJSON(IDB.ATTRIBUTES,db.attr(DATE_END,DATE_BEGIN,SCHEDULE_TYTLE,EDUCATIONAL_INSTITUTION));
         recordsetToJSON(IDB.CHANGES, db.changes());
+        recordsetToJSON(IDB.SKILL,db.skill());
+        recordsetToJSON(IDB.CURRICULUM, db.curriculum());
         
         put(IDB.META, meta);
         
