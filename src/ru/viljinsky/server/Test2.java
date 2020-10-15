@@ -11,18 +11,13 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import org.json.JSONObject;
 import ru.viljinsky.project2019.DataModel;
-import ru.viljinsky.project2019.Grid;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Proc;
-import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Tab;
-import ru.viljinsky.project2019.replacement.Document.Changes;
 import ru.viljinsky.project2019.replacement.ReplacementTab2;
 import ru.viljinsky.sensystem.Client;
-import ru.viljinsky.sensystem.TestJSON3;
 import ru.viljinsky.tcp.CommandBar;
 import ru.viljinsky.tcp.MultipartUtility;
 
@@ -33,46 +28,25 @@ import ru.viljinsky.tcp.MultipartUtility;
  */
 public class Test2 extends JPanel implements IDataModel{
     
-    class TestPanel extends JPanel{
-        Grid grid = new Grid();
-        public TestPanel() {
-            setLayout(new BorderLayout());
-            add(new JScrollPane(grid));
-        }
-        
-    }
-    
-    TestPanel testPanel = new TestPanel();
     
     public static final String OPEN = "open";
     public static final String SEND = "send";
     public static final String TEST = "test";
     
-    void test() throws Exception{
-        Proc.query(con->{
-            Recordset r = new Changes(con);
-            testPanel.grid.setRecordset(r);
-//            r.print();
-        });
-    }
     
     public void open() throws Exception{
         DataModel.setConnection(params.getString(Client.SOURCE));
         Proc.query(con->{
             tab.open(con);
-        });
-        
-        JFrame frame = new JFrame();
-        frame.setContentPane(testPanel);
-        frame.pack();
-        frame.setVisible(true);
+        });        
     }
     
     String data = "";
     String getData() throws Exception{
         Proc.query(con->{
 //            JSONObject json = new DB_JSON_encoder(con);
-            JSONObject json = new TestJSON3(con);
+//            JSONObject json = new TestJSON3(con);
+            JSONObject json = new DB_JSON_encoder(con);
             data = json.toString();
         });
         return data;
@@ -111,9 +85,6 @@ public class Test2 extends JPanel implements IDataModel{
                     case OPEN:
                         open();
                         break;
-                    case TEST:
-                        test();
-                        break;
                 }
             } catch(Exception e){
                 showMessage(e.getMessage());
@@ -123,6 +94,7 @@ public class Test2 extends JPanel implements IDataModel{
     };
     
     Tab tab = new ReplacementTab2();
+    
     Client.ConnectionParams params = new Client.ConnectionParams();
 
     public Test2() {
@@ -134,12 +106,14 @@ public class Test2 extends JPanel implements IDataModel{
     
     public static void main(String[] args) throws Exception{
         
+        Test2 p = new Test2();
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setContentPane(new Test2());
+        frame.setContentPane(p);
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+        p.open();
         
     }
     

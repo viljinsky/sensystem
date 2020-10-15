@@ -79,12 +79,21 @@ abstract class AbstractViewModel implements IDataModel,ViewModel{
     };
             
     protected Recordset  getScheculeRecordset(Date date) throws Exception{
-        return new ScheduleRecordset(view.schedule, view.changes,date)
+        Recordset recordset = new ScheduleRecordset(view.schedule, view.changes,date)
                 .join(view.depart, DEPART_ID)
                 .join(view.subject, SUBJECT_ID)
                 .left(view.room, ROOM_ID)
                 .left(view.teacher, TEACHER_ID)
                 .left(view.group_label, DEPART_ID,GROUP_ID,SUBJECT_ID);
+        int index = recordset.columnIndex(DATE);
+        for(Iterator<Object[]> it=recordset.iterator();it.hasNext();){
+            Object[] p = it.next();
+            Date d = SIMPLE_DATE_FORMAT.parse((String)p[index]);
+            if (d.before(view.date_begin) || d.after(view.date_end)){
+                it.remove();
+            }
+        }
+        return recordset;
     }
     
 }
@@ -148,7 +157,7 @@ class Model2 extends AbstractViewModel{
         Recordset recordset = getScheculeRecordset(date);
         
         for(Iterator<Values> it = recordset.getIterator();it.hasNext();){
-            Values values = it.next();
+            Values values = it.next();            
             Cell cell = findCell(values);
             if (cell!=null){
                 cell.addItem(view.createItem(values));
@@ -167,7 +176,6 @@ class Model1 extends AbstractViewModel {
     public void init(){
         view.setDimension(0, 0);
         Recordset depart = view.depart.filter(view.departFilter);
-        depart.print();
         for(int i = 0;i<view.day_list.size();i++){
             view.addRow(new ValuesHeader((String)view.day_list.get(i)[1],view.day_list.getValues(i).getValues(DAY_ID)));
             for (int j=0;j<view.bell_list.size();j++){
@@ -179,6 +187,7 @@ class Model1 extends AbstractViewModel {
         for(int col=0;col<depart.size();col++){
             view.addColumn(new ValuesHeader((String)depart.get(col)[1], depart.getValues(col).getValues(DEPART_ID)));
         }
+                
         view.rebuild();
     }
         

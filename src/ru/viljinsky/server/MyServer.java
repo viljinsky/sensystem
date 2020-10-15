@@ -7,6 +7,7 @@
 package ru.viljinsky.server;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -63,7 +64,11 @@ public class MyServer extends JPanel implements IDataModel{
         calendarView.setMonth(values.getString(DATE_BEGIN),values.getString(DATE_END));
         calendarView.setPeriod(values.getString(DATE_BEGIN),values.getString(DATE_END));
         calendarView.setSelectionDate(new Date());
-//        view.setStatusTest("Данные обновлены "+new SimpleDateFormat("dd MMM yyyy HH:mm").format(new Date()));
+        
+        Recordset r = db.changes().count(DATE);
+        for(Object[] p: r){
+            calendarView.setBackground((String)p[0], Color.yellow);
+        }
         
     }
     
@@ -126,8 +131,8 @@ public class MyServer extends JPanel implements IDataModel{
         add(view.statusBar,BorderLayout.PAGE_END);
         add(view.title,BorderLayout.PAGE_START);
         view.title.add(new ViewControl(view));
-//        view.title.add(skillFilter);
-        view.title.add(curriculumFilter);
+        view.title.add(skillFilter);
+//        view.title.add(curriculumFilter);
     }
     
     public void showInFrame(){

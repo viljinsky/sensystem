@@ -61,9 +61,29 @@ abstract class AbstractControl extends JComponent implements IDataModel{
     
     ScheduleView view;
 
+    public void valuesClick(Values values){
+    }
+    
+    public void doCommand(String comand){
+    }
     public AbstractControl(ScheduleView view) {
         this.view = view;
         setLayout(new FlowLayout(FlowLayout.LEFT));
+    }
+
+    class ValuesButton extends JButton{
+        Values values;
+        public ValuesButton(String name,Values values) {
+            super(name);
+            this.values = values;
+            addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    valuesClick(values);
+                }
+            });
+        }
     }
     
         
@@ -80,7 +100,6 @@ abstract class AbstractControl extends JComponent implements IDataModel{
         return button;
     }
     
-    abstract void doCommand(String command);
 }
 
 class SkillFilter extends AbstractControl{
@@ -91,41 +110,29 @@ class SkillFilter extends AbstractControl{
 
     public void setValues(Recordset recordset){
         removeAll();
+        add(new ValuesButton("Все", null));
         for(int i=0;i<recordset.size();i++){
             Values values = recordset.getValues(i);
-            add(createButton(values.getString(IDataModel.SKILL_NAME)));
+            add(new ValuesButton((String)values.get(SKILL_NAME), values));
         }        
+    }
+
+    @Override
+    public void valuesClick(Values values) {
+        view.setDepartFilter(values);
     }
        
     
-    @Override
-    void doCommand(String command) {
-        System.out.println(command);
-    }
+    
 }
 
 class CurriculumFilter extends AbstractControl{
     
-    void valuesClick(Values values){
+    @Override
+    public void valuesClick(Values values){
         view.setDepartFilter(values);
     }
-    
-    class ValuesButton extends JButton{
-        Values values;
-        public ValuesButton(String name,Values values) {
-            super(name);
-            this.values = values;
-            addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    valuesClick(values);
-                }
-            });
-        }
-    }
-    
-
+        
     public CurriculumFilter(ScheduleView view) {
         super(view);
     }
@@ -137,12 +144,7 @@ class CurriculumFilter extends AbstractControl{
             add(new ValuesButton((String)values.get(CURRICULUM_NAME),values.getValues(CURRICULUM_ID)));
         }
     }
-            
 
-    @Override
-    void doCommand(String command) {
-        System.out.println(command);
-    }
 }
 class ViewControl extends AbstractControl{
     
@@ -158,7 +160,7 @@ class ViewControl extends AbstractControl{
     }
     
     @Override
-    void doCommand(String command){
+    public void doCommand(String command){
         System.out.println(command);
         ViewModel model;
         switch(command){
@@ -180,7 +182,7 @@ class ViewControl extends AbstractControl{
 }
 
 class ScheduleTitle extends JComponent implements IDataModel{
-    JLabel schedulePeriod = new JLabel("schedulePeriod");
+    private JLabel schedulePeriod = new JLabel("schedulePeriod");
 
     public ScheduleTitle() {
         setBorder(BorderFactory.createEtchedBorder());
@@ -198,9 +200,20 @@ class ScheduleTitle extends JComponent implements IDataModel{
         
     }
     
+    public void setDate(Date date){
+        Calendar c =Calendar.getInstance();
+        c.setTime(date);
+        int week = c.get(Calendar.WEEK_OF_YEAR) % 2+ 1;
+        c.add(Calendar.DAY_OF_MONTH,6);
+        SimpleDateFormat sdf = new SimpleDateFormat("E dd MMM");
+        schedulePeriod.setText(String.format("%s %s %s", sdf.format(date),sdf.format(c.getTime()),week==1?"Чётная неделя":"Нечётная неделя"));
+    }
+    
 }
 
 public class ScheduleView extends View implements IDataModel{
+    
+    Date date_begin,date_end;
     
     Values departFilter = null;//new Values(CURRICULUM_ID,1);
     
@@ -239,7 +252,7 @@ public class ScheduleView extends View implements IDataModel{
             c.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
             this.date=c.getTime();
             model.setDate(this.date);
-            title.schedulePeriod.setText(new SimpleDateFormat("E dd MMM yyyy").format(this.date));
+            title.setDate(this.date);//schedulePeriod.setText(new SimpleDateFormat("E dd MMM yyyy").format(this.date));
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -386,9 +399,15 @@ public class ScheduleView extends View implements IDataModel{
         skill = db.skill();
         curriculum = db.curiculum();
 //        model.open(idb);
+        
+        date_begin = new SimpleDateFormat("yyyy-MM-dd").parse(attributes.getString(DATE_BEGIN));
+        date_end = new SimpleDateFormat("yyyy-MM-dd").parse(attributes.getString(DATE_END));
+                
+        
         model.init();
         setVisible(true);        
         title.setValues(model.attributes());
+        
         periodChange();
     }
             
