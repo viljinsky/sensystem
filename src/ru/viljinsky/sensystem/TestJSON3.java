@@ -165,6 +165,19 @@ public class TestJSON3 extends JSONObject implements IDataModel {
         addRecordset("schedules", recordset);
         
         r = new Changes(con).left(db.group_label(),DEPART_ID,GROUP_ID,SUBJECT_ID).select(DATE,DAY_ID,BELL_ID,DEPART_ID,SUBJECT_ID,FLAG,Changes.NEW_SUBJECT_ID,Changes.NEW_TEACHER_ID,Changes.NEW_ROOM_ID,GROUP_KEY);
+        int index = r.columnIndex(FLAG);
+        for(Object[] p:r){
+            int flag = (int)p[index];
+            switch(flag){
+                case 2:
+                    p[index] = 0;
+                    break;
+                case 3:
+                    p[index] = 2;
+                    break;
+            }
+            
+        }
         values = new Values();
         values.put(GROUP_KEY, "depart_group_id");
         values.put(FLAG,"change_type");

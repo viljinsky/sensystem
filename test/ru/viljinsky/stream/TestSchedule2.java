@@ -6,7 +6,6 @@
 
 package ru.viljinsky.stream;
 
-import ru.viljinsky.server.ScheduleRecordset;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.Date;
@@ -21,6 +20,7 @@ import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
+import ru.viljinsky.project2019.replacement.Document;
 import ru.viljinsky.server.DB_SQLITE;
 import ru.viljinsky.server.IDB;
 
@@ -46,7 +46,7 @@ public class TestSchedule2 extends JPanel implements IDataModel{
 //        Recordset changes = db.changes();
         try{
             if (date!=null){
-                Recordset s = new ScheduleRecordset(schedule, changes, date);
+                Recordset s = new Document.ScheduleRecordset(schedule, changes, date);
 
                 grid1.setRecordset(s);
                 grid2.setRecordset(changes);

@@ -22,7 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.Proc;
-import ru.viljinsky.project2019.replacement.ReplacementTab2;
+import ru.viljinsky.project2019.replacement.ReplacementTab;
 import ru.viljinsky.tcp.CommandBar;
 import ru.viljinsky.tcp.MainHTTP;
 import ru.viljinsky.tcp.MessagePane;
@@ -106,7 +106,7 @@ public class Client extends JPanel implements IClient{
     void replacement() throws Exception{
         
         DataModel.setConnection(params.getString(SOURCE));
-        ReplacementTab2 replacementTab = new ReplacementTab2();
+        ReplacementTab replacementTab = new ReplacementTab();
 //     ReplacementTab2 replacemetTab = ReplacementTab2();
         replacementTab.showInFrame();
         Proc.query(con->{

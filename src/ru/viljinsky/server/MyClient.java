@@ -16,7 +16,7 @@ import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.Tab;
-import ru.viljinsky.project2019.replacement.ReplacementTab2;
+import ru.viljinsky.project2019.replacement.ReplacementTab;
 import ru.viljinsky.sensystem.Client;
 import ru.viljinsky.tcp.CommandBar;
 import ru.viljinsky.tcp.MultipartUtility;
@@ -26,7 +26,7 @@ import ru.viljinsky.tcp.MultipartUtility;
  *
  * @author viljinsky
  */
-public class Test2 extends JPanel implements IDataModel{
+public class MyClient extends JPanel implements IDataModel{
     
     
     public static final String OPEN = "open";
@@ -93,11 +93,11 @@ public class Test2 extends JPanel implements IDataModel{
         
     };
     
-    Tab tab = new ReplacementTab2();
+    Tab tab = new ReplacementTab();
     
     Client.ConnectionParams params = new Client.ConnectionParams();
 
-    public Test2() {
+    public MyClient() {
         setLayout(new BorderLayout() );
         add(tab);
         add(params,BorderLayout.PAGE_END);
@@ -106,7 +106,7 @@ public class Test2 extends JPanel implements IDataModel{
     
     public static void main(String[] args) throws Exception{
         
-        Test2 p = new Test2();
+        MyClient p = new MyClient();
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setContentPane(p);

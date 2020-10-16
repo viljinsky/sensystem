@@ -147,7 +147,7 @@ public class MyServer extends JPanel implements IDataModel{
         } catch (Exception e){
         }
         
-        JFrame frame = new JFrame();
+        JFrame frame = new JFrame("Составитель расписания (сервер)");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setContentPane(this);
         frame.pack();

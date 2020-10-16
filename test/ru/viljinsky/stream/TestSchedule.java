@@ -6,7 +6,6 @@
 
 package ru.viljinsky.stream;
 
-import ru.viljinsky.server.ScheduleRecordset;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.sql.Connection;
@@ -47,7 +46,7 @@ public class TestSchedule extends JPanel implements IDataModel{
         DB  db = new DB(con);
         Recordset source = db.query("select null as date,a.day_id,a.bell_id,a.depart_id,a.group_id,a.subject_id,a.teacher_id,a.room_id,null as flag,week_id from schedule a inner join subject_group using(depart_id,group_id,subject_id)");
         Recordset changes = new Document.Changes(con);
-        grid.setRecordset(new ScheduleRecordset(source, changes, new Date()));
+        grid.setRecordset(new Document.ScheduleRecordset(source, changes, new Date()));
         grid1.setRecordset(changes);
     }
     
