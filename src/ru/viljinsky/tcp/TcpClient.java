@@ -55,6 +55,8 @@ public class TcpClient {
                 String responce  = client.sendMessage(s);        
                 System.out.println(responce);
             }
+        } catch(Exception e){
+            System.err.println(e.getMessage());
         } finally {
             client.close();
         }
