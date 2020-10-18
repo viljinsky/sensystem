@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.HashMap;
+import java.util.Map;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -25,7 +26,7 @@ import javax.swing.event.DocumentListener;
  *
  * @author viljinsky
  */
-class ValuesPanel extends JPanel {
+public class ValuesPanel extends JPanel {
 
     class ValuesPanelField extends JPanel implements DocumentListener {
 
@@ -98,13 +99,13 @@ class ValuesPanel extends JPanel {
         add(new ValuesPanelField(fieldName, value));
     }
     
-    public void setValues(HashMap<String, Object> map) {
+    public void setValues(Map<String, Object> map) {
         for (String key : map.keySet()) {
             add(new ValuesPanelField(key, map.get(key)));
         }
     }
 
-    HashMap<String, Object> getValues() {
+    public Map<String, Object> getValues() {
         HashMap hashMap = new HashMap();
         for (int i = 0; i < getComponentCount(); i++) {
             ValuesPanelField vfp = (ValuesPanelField) getComponent(i);
@@ -145,6 +146,11 @@ class ValuesPanel extends JPanel {
             vfp.setValue(value);
         }
     }
+    
+//    public Map getValues(){
+//        HashMap map = new HashMap();
+//        return map;
+//    }
     
     public void saveValues(String fileName){
         File file = new File(fileName);

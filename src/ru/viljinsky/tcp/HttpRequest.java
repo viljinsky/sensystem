@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -22,12 +23,12 @@ import java.util.regex.Pattern;
  */
 public class HttpRequest {
     
-    String path;
-    String method;
+    public String path;
+    public String method;
     String uri;
     String protocol;
-    Map<String,String> headers;
-    Map<String,Object> values = new HashMap<>();
+    public Map<String,String> headers;
+    public Map<String,Object> values = new HashMap<>();
     
     static final Pattern p  = Pattern.compile("(.+):(.*)");
     
@@ -94,15 +95,31 @@ public class HttpRequest {
     }
     
     public void pacePost(BufferedReader reader) throws Exception{
-        String boundary = headerValues(headers.get("Content-Type"), "boundary=");
         String line;
-        while((line=reader.readLine())!=null){
-            if (line.startsWith("--"+boundary)){
-                parceValue(reader,boundary);
+        
+        String boundary = headerValues(headers.get("Content-Type"), "boundary=");
+        if (boundary == null){
+//        if (headers.get("Content-Type").equals("application/x-www-form-urlencoded")){
+            char[] buf = new char[1024];
+            int size = reader.read(buf);
+            String s = String.copyValueOf(buf, 0, size);
+            String[] p = s.split("&");
+            for(String ss: p){
+                String[] pp = ss.split("=");
+                if (pp.length==2){
+                    values.put(URLDecoder.decode(pp[0],"utf-8"),URLDecoder.decode(pp[1],"utf-8"));
+                }
             }
-            if (reader.ready()) continue;
-            break;
-        }
+           
+        } else 
+            
+            while((line=reader.readLine())!=null){
+                if (line.startsWith("--"+boundary)){
+                    parceValue(reader,boundary);
+                }
+                if (reader.ready()) continue;
+                break;
+            }
     }
     
     public void parceGet(){
@@ -112,7 +129,10 @@ public class HttpRequest {
             if (p.length==2){
                 for(String s: p[1].split("&")){
                     String[] ss = s.split("=");
-                    values.put(ss[0], ss.length==2? ss[1] : null);
+                    try{
+                        values.put(URLDecoder.decode(ss[0],"utf-8"), ss.length==2? URLDecoder.decode(ss[1],"utf-8") : null);
+                    } catch (Exception e){
+                    }
                 }
             }
         } else {
@@ -120,7 +140,6 @@ public class HttpRequest {
         }
     }
     
-
     private void parce(BufferedReader reader) throws Exception{
         query(reader.readLine());
 
@@ -148,8 +167,7 @@ public class HttpRequest {
     public HttpRequest(BufferedReader reader) throws Exception{
         parce(reader);
     }
-    
-    
+        
     @Override
     public String toString(){
         return String.format("%s %s %s ",method,uri,protocol);
@@ -165,8 +183,7 @@ public class HttpRequest {
         }
         return null;
     }
-    
-    
+        
     public static void main(String[] args) throws Exception{
         
         File file = new File("new 1.txt");

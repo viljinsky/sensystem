@@ -98,7 +98,16 @@ public class MyServer extends JPanel implements IDataModel{
 
         @Override
         public String responce(HttpRequest request) {
-            try{
+            try{                                
+                
+                switch(request.method){
+                    case "POST":                                                
+                        
+                        break;
+                    case "GET":
+                        
+                        break;
+                }
                 
                 if (request.hasParamByName("data")){
                     open(request.paramByName("data"));                
