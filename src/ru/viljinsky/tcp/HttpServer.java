@@ -7,6 +7,8 @@
 package ru.viljinsky.tcp;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -21,14 +23,14 @@ public class HttpServer{
     
     int port;
     
-    public String responce(HttpRequest request){
+    public HttpResponce responce(HttpRequest request){
         StringBuilder stringBuilder = new StringBuilder();
         
         for(String key:request.values.keySet()){
             stringBuilder.append(key+" "+request.paramByName(key)+"\n");
         }
         
-        return stringBuilder.toString();
+        return new HttpResponce(HttpResponce.RESULT_OK, stringBuilder.toString());
     }
     
     public void onStart(HttpServer server){
@@ -53,24 +55,22 @@ public class HttpServer{
         @Override
         public void run() {
             try{
-//                onStart(this);
                 System.out.println("client started");
                 try(PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(),"utf-8"),true);
                         BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(),"utf-8"))
                         ){
                     HttpRequest request = new HttpRequest(reader);
-                    String responce = responce(request);
+                    HttpResponce responce = responce(request);
                     
-                    writer.println("HTTP/1.1 200 OK");
-                    writer.println("Content-Type: text/html; charset=UTF-8");
-                    writer.println("Content-Length: "+responce.length());
+                    writer.println(responce.header());
                     writer.println();
-                    writer.println(responce);                    
+                    writer.println(responce.getText());                    
                     writer.write("");
-                    
+                    String s = responce.getText();
+                    System.out.println("text size" + s.length());
                 } catch (Exception e){
                     onError(e);
-                    System.out.println("run exception "+e.getMessage());
+                    System.err.println("run exception "+e.getMessage());
                 }
             } finally{
                 try{

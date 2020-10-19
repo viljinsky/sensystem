@@ -6,6 +6,8 @@
 
 package ru.viljinsky.tcp;
 
+import ru.viljinsky.server.CommandBar;
+import ru.viljinsky.server.MessagePane;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.net.ServerSocket;

@@ -6,6 +6,8 @@
 
 package ru.viljinsky.tcp;
 
+import ru.viljinsky.server.CommandBar;
+import ru.viljinsky.server.MessagePane;
 import java.awt.BorderLayout;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -57,40 +59,60 @@ public class HttpClient extends JPanel{
         return sb.toString();
     }
     
-    public void get(Map values) throws Exception{
-        String query = query(values);
-        URL url = new URL(host+(query.isEmpty()?"":"?"+query));
-        HttpURLConnection con = (HttpURLConnection)url.openConnection();
-        InputStream in = con.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in,"utf-8"));
-        String line ;
-        while ((line=reader.readLine())!=null){
-            textOut(line+"\n");
+    public HttpResponce get(Map values) throws Exception{
+        try{
+            StringBuilder stringBuilder = new StringBuilder();
+            String query = query(values);
+            URL url = new URL(host+(query.isEmpty()?"":"?"+query));
+            HttpURLConnection con = (HttpURLConnection)url.openConnection();
+            InputStream in = con.getInputStream();
+            byte[] buf = new byte[1024];
+            int n;
+            while((n=in.read(buf))>=0){
+                stringBuilder.append(new String(buf, 0, n, "utf-8"));
+            }
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(in,"utf-8"));
+//            String line ;
+//            while ((line=reader.readLine())!=null){
+//                stringBuilder.append(line);//.append("\n");
+//    //            textOut(line+"\n");
+//            }
+//            reader.close();
+            in.close();
+            return new HttpResponce(HttpResponce.RESULT_OK,stringBuilder.toString());
+        } catch(Exception e){
+            return new HttpResponce(HttpResponce.INTERNAL_ERROR,e.getMessage());
         }
-        reader.close();
-        in.close();
     }
     
-    public void post(Map values) throws Exception{
-        URL url = new URL(host);
-        HttpURLConnection con = (HttpURLConnection)url.openConnection();
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");        
-        con.setDoOutput(true);
-        OutputStream out = con.getOutputStream();
-        String query = query(values);
-        out.write(query.getBytes());
-        out.flush();
-        
-        byte[] buf = new byte[1024];
-        InputStream in = con.getInputStream();
-        int n = in.read(buf);
-        
-        out.close();
-        in.close();
-        con.disconnect();
-       
-        
+    public HttpResponce post(Map values) throws Exception{
+        try{
+            StringBuilder stringBuilder = new StringBuilder();
+            URL url = new URL(host);
+            HttpURLConnection con = (HttpURLConnection)url.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");        
+            con.setDoOutput(true);
+            OutputStream out = con.getOutputStream();
+            String query = query(values);
+            out.write(query.getBytes());
+            out.flush();
+
+            byte[] buf = new byte[1024];
+            InputStream in = con.getInputStream();
+            int n ;
+            while((n=in.read(buf))>=0){
+                stringBuilder.append(new String(buf,0, n, "utf-8"));
+            }
+
+            out.close();
+            in.close();
+            con.disconnect();
+
+           return new HttpResponce(HttpResponce.RESULT_OK,stringBuilder.toString());
+        } catch (Exception e){
+            return new HttpResponce(HttpResponce.INTERNAL_ERROR,e.getMessage());
+        }
     }
     
     void showMessage(String message){
@@ -100,18 +122,21 @@ public class HttpClient extends JPanel{
 
         @Override
         public void doCommand(String command) {
+            HttpResponce responce;
             try{
-            switch(command){
-                case START:
-                    startServer();
-                    break;
-                case POST:
-                    post(valuesPanel.getValues());
-                    break;
-                case GET:
-                    get(valuesPanel.getValues());
-                    break;
-            }
+                switch(command){
+                    case START:
+                        startServer();
+                        break;
+                    case POST:
+                        responce = post(valuesPanel.getValues());
+                        textOut(responce.getText());
+                        break;
+                    case GET:
+                        responce = get(valuesPanel.getValues());
+                        textOut(responce.getText());
+                        break;
+                }
             } catch(Exception e){
                 showMessage(e.getMessage());
             }
@@ -135,6 +160,10 @@ public class HttpClient extends JPanel{
         add(valuesPanel,BorderLayout.PAGE_END);
     }
     
+    public HttpClient(String host){
+        this.host = host;
+    }
+    
     
     void startServer() throws Exception{
         
@@ -151,13 +180,16 @@ public class HttpClient extends JPanel{
                         }
                                                 
                         @Override
-                        public String responce(HttpRequest request) {
-                            textOut(request.path+"\n");
-                            textOut(request.method+"\n");
+                        public HttpResponce responce(HttpRequest request) {
+                            StringBuilder stringBuilder = new StringBuilder();
+                            stringBuilder.append(request.path+"\n");
+                            stringBuilder.append(request.method+"\n");
                             for(String k:request.values.keySet()){
-                                textOut(k+" "+request.paramByName(k)+"\n");
+                                stringBuilder.append(k).append(" ").append(request.paramByName(k)).append("\n");
+//                                textOut(k+" "+request.paramByName(k)+"\n");
                             }
-                            return "OK";
+                            textOut(stringBuilder.toString());
+                            return new HttpResponce(HttpResponce.RESULT_OK,stringBuilder.toString());
                         }
 
                     };

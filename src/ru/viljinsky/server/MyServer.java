@@ -11,7 +11,10 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,6 +27,7 @@ import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
 import ru.viljinsky.tcp.HttpRequest;
+import ru.viljinsky.tcp.HttpResponce;
 import ru.viljinsky.tcp.HttpServer;
 
 /**
@@ -75,8 +79,40 @@ public class MyServer extends JPanel implements IDataModel{
     void setStatusText(String text){
         view.statusBar.setStatusTest(text);
     }
+    class NotFound extends HttpResponce{
+
+        public NotFound() {
+            responceCode = NOT_FOUND;
+        }
+        
+    }
     
-    
+    class Page1 extends HttpResponce{
+
+        public Page1() throws Exception{
+            File file = new File(SERVER_DATA);
+            if (file.exists()){
+                StringBuilder stringBuilder = new StringBuilder();
+                try(
+                    InputStream in = new FileInputStream(file);){
+                    byte[] buf = new byte[200];
+                    int n;
+                    while((n = in.read(buf))>=0){
+                        String s = new String(buf,0,n,"utf-8");
+                        stringBuilder.append(s);
+                    }
+                    responceCode = RESULT_OK;
+                    responceText = stringBuilder.toString();
+                    System.out.println("file size :"+ responceText.length());
+                }
+            } else {
+                responceCode = NOT_FOUND;
+                responceText = "<p>файл данных не найден</p>";
+            }
+            
+        }
+        
+    }
     
     HttpServer server = new HttpServer(){
 
@@ -97,35 +133,44 @@ public class MyServer extends JPanel implements IDataModel{
         }
 
         @Override
-        public String responce(HttpRequest request) {
+        public HttpResponce responce(HttpRequest request) {
             try{                                
                 
                 switch(request.method){
                     case "POST":                                                
                         
-                        break;
+                        if (request.hasParamByName("data")){
+                            open(request.paramByName("data"));                
+                            File file=new File(SERVER_DATA);
+                            try(
+                                    FileOutputStream out = new FileOutputStream(file);
+                                    BufferedWriter write = new BufferedWriter(new OutputStreamWriter(out,"utf-8"));){
+                                write.write(request.paramByName("data"));
+                            }
+
+                        }
+                        return new HttpResponce(HttpResponce.BAD_REQUEST,"param data not found");
+                        
                     case "GET":
                         
-                        break;
+                        String path = request.path;
+                        switch (path){
+                            case "/page1":
+                                return new Page1();//new HttpResponce(HttpResponce.RESULT_OK,"<p>page1</p>");
+                            case "/page2":
+                                return new HttpResponce(HttpResponce.RESULT_OK,"<p>page2</p>");
+                            case "/page3":
+                                return new HttpResponce(HttpResponce.RESULT_OK,"<p>page3</p>");
+                            default:
+                                return new NotFound();
+                        }                        
+                        //break;
                 }
-                
-                if (request.hasParamByName("data")){
-                    open(request.paramByName("data"));                
-                    File file=new File(SERVER_DATA);
-                    try(
-                            FileOutputStream out = new FileOutputStream(file);
-                            BufferedWriter write = new BufferedWriter(new OutputStreamWriter(out,"utf-8"));){
-                        write.write(request.paramByName("data"));
-                    }
-                       
-                }
-                else     
-                    return "param data not found";
                 setStatusText("Данные обновлены "+new SimpleDateFormat("HH:mm dd MMM yyyy").format(new Date()));
             } catch (Exception e){
-                return e.getMessage();
+                return new HttpResponce(HttpResponce.INTERNAL_ERROR,e.getMessage());
             }
-            return "OK";
+            return new HttpResponce(HttpResponce.RESULT_OK, "OK");
         }
         
     };

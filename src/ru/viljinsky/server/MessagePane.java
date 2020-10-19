@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package ru.viljinsky.tcp;
+package ru.viljinsky.server;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -53,6 +53,7 @@ public class MessagePane extends JPanel {
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
         textArea.setEditable(false);
         textArea.setFont(new Font(Font.DIALOG_INPUT,Font.PLAIN,12));
+//        textArea.setWrapStyleWord(true);
     }
 
     public void textOut(String text) {

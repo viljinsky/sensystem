@@ -6,6 +6,8 @@
 
 package ru.viljinsky.tcp;
 
+import ru.viljinsky.server.CommandBar;
+import ru.viljinsky.server.MessagePane;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import javax.swing.JFrame;
@@ -42,38 +44,42 @@ public class MainHTTP extends JPanel{
 
 
         @Override
-        public String responce(HttpRequest request) {
+        public HttpResponce responce(HttpRequest request) {
+            StringBuilder stringBuilder = new StringBuilder();
             try{
-                textOut(request.toString()+"\n");
-                textOut("headers:\n");
+                stringBuilder.append(request.toString()+"\n");
+                stringBuilder.append("headers:\n");
                 for(String s:request.headers.keySet()){
-                    textOut("\t"+s+" "+request.headers.get(s)+"\n");
+                    stringBuilder.append("\t"+s+" "+request.headers.get(s)+"\n");
                 }
-                textOut("path   : "+request.path+"\n");
+                stringBuilder.append("path   : "+request.path+"\n");
                 if (!request.values.isEmpty()){
-                textOut("params :\n");
+                stringBuilder.append("params :\n");
                     for(String s:request.values.keySet()){
-                        textOut("\t"+s+" = \""+request.paramByName(s)+"\"\n");
+                        stringBuilder.append("\t"+s+" = \""+request.paramByName(s)+"\"\n");
                     }
-                    textOut("\n");
+                    stringBuilder.append("\n");
                 }
+                textOut(stringBuilder.toString());
                 
                 if (request.hasParamByName("data")){
                     try{
                         IDB db = new DB_JSON_decoder(request.paramByName("data"));
-                        return db.toString();
+                        return new HttpResponce(HttpResponce.RESULT_OK, db.toString());
                     } catch(Exception e){
-                        return e.getMessage();
+                        return new HttpResponce(HttpResponce.INTERNAL_ERROR,e.getMessage());
                     }
                 }
 
-                return "<p>Запрос выполнен успешно</p>";
+                return new HttpResponce(HttpResponce.RESULT_OK,"<p>Запрос выполнен успешно</p>");
             } catch (JSONException e){
-                textOut("Ошибка формирование ответа : "+e.getMessage());
-                return "<p>Ошибка зазбора запроса</p><p>"+e.getMessage()+"</p>";
+                stringBuilder.append("Ошибка формирование ответа : "+e.getMessage());
+                return new HttpResponce(HttpResponce.INTERNAL_ERROR,"<p>Ошибка зазбора запроса</p><p>"+e.getMessage()+"</p>");
             }
+           // return new HttpResponce(HttpResponce.RESULT_OK,"result OK");
 
         }
+                
     }
         
     static final String UNSUPPORTED_OPERATION = "unsupported yet";

@@ -23,9 +23,9 @@ import javax.swing.JScrollPane;
 import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.replacement.ReplacementTab;
-import ru.viljinsky.tcp.CommandBar;
+import ru.viljinsky.server.CommandBar;
 import ru.viljinsky.tcp.MainHTTP;
-import ru.viljinsky.tcp.MessagePane;
+import ru.viljinsky.server.MessagePane;
 import ru.viljinsky.tcp.MultipartUtility;
 
 interface  IClient{

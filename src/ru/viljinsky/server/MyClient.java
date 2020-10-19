@@ -18,7 +18,6 @@ import ru.viljinsky.project2019.Proc;
 import ru.viljinsky.project2019.Tab;
 import ru.viljinsky.project2019.replacement.ReplacementTab;
 import ru.viljinsky.sensystem.Client;
-import ru.viljinsky.tcp.CommandBar;
 import ru.viljinsky.tcp.MultipartUtility;
 
 

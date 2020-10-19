@@ -44,6 +44,7 @@ public class TcpServer {
         public void run() {
             String line ;
             try{
+                
                 responce(client, "client connected");
                 StringBuilder sb = new StringBuilder("**\n");
                 while((line = in.readLine())!=null){

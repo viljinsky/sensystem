@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package ru.viljinsky.tcp;
+package ru.viljinsky.server;
 
 import java.awt.event.ActionEvent;
 import javafx.scene.control.ToggleButton;
