@@ -9,9 +9,9 @@ package ru.viljinsky.tcp;
 import ru.viljinsky.server.CommandBar;
 import ru.viljinsky.server.MessagePane;
 import java.awt.BorderLayout;
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -56,7 +56,25 @@ public class HttpClient extends JPanel{
 //                Logger.getLogger(HttpClient.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
-        return sb.toString();
+        return sb.append("\n").toString();
+    }
+    
+    public HttpResponce get() throws Exception{
+        try{
+            StringBuilder stringBuilder = new StringBuilder();
+            URL url = new URL(host);
+            HttpURLConnection con = (HttpURLConnection)url.openConnection();
+                    InputStream in = con.getInputStream();
+            byte[] buf = new byte[1024];
+            int n;
+            while((n=in.read(buf))>=0){
+                stringBuilder.append(new String(buf, 0, n, "utf-8"));
+            }
+            in.close();
+            return new HttpResponce(HttpResponce.RESULT_OK,stringBuilder.toString());
+        } catch(IOException e){
+            return new HttpResponce(HttpResponce.RESULT_OK,e.getMessage());
+        }
     }
     
     public HttpResponce get(Map values) throws Exception{
@@ -87,7 +105,7 @@ public class HttpClient extends JPanel{
     
     public HttpResponce post(Map values) throws Exception{
         try{
-            StringBuilder stringBuilder = new StringBuilder();
+//            StringBuilder stringBuilder = new StringBuilder();
             URL url = new URL(host);
             HttpURLConnection con = (HttpURLConnection)url.openConnection();
             con.setRequestMethod("POST");
@@ -98,18 +116,20 @@ public class HttpClient extends JPanel{
             out.write(query.getBytes());
             out.flush();
 
+            ByteArrayOutputStream arr = new ByteArrayOutputStream();
             byte[] buf = new byte[1024];
             InputStream in = con.getInputStream();
             int n ;
             while((n=in.read(buf))>=0){
-                stringBuilder.append(new String(buf,0, n, "utf-8"));
+                arr.write(buf,0,n);
+//                stringBuilder.append(new String(buf,0, n, "utf-8"));
             }
 
             out.close();
             in.close();
             con.disconnect();
 
-           return new HttpResponce(HttpResponce.RESULT_OK,stringBuilder.toString());
+           return new HttpResponce(arr.toByteArray());
         } catch (Exception e){
             return new HttpResponce(HttpResponce.INTERNAL_ERROR,e.getMessage());
         }

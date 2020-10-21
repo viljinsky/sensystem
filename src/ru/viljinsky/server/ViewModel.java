@@ -30,10 +30,24 @@ public interface ViewModel{
     public void setDate(String date) throws Exception;
     public Values attributes();
     public void setView(ScheduleView view);
+    public Values getRowData(int row);
+    public Values getColumnData(int col);
+    
     
 }
 
 abstract class AbstractViewModel implements IDataModel,ViewModel{
+
+    @Override
+    public Values getRowData(int row) {
+        return ((ValuesHeader)view.getRowHeader(row)).values;
+    }
+
+    @Override
+    public Values getColumnData(int col) {
+        return ((ValuesHeader)view.getColumnHeader(col)).values;
+    }
+    
     
     
     ScheduleView view;
@@ -64,15 +78,6 @@ abstract class AbstractViewModel implements IDataModel,ViewModel{
         return view.attributes;
     }
     
-    public Object getRowHeaderData(int row){
-        ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);
-        return vh.values;
-    }
-    
-    public Object getColumnHeaderData(int col){
-        ValuesHeader vh = (ValuesHeader)view.getColumnHeader(col);
-        return vh.values;
-    }
 
     @Override
     public void setDate(String date) throws Exception{
@@ -97,7 +102,7 @@ abstract class AbstractViewModel implements IDataModel,ViewModel{
         return recordset;
     }
     
-}
+    }
 
 class Model2 extends AbstractViewModel{
 
@@ -317,4 +322,73 @@ class Model3 extends AbstractViewModel{
         view.rebuild();
     }
 
+}
+
+class Model4 extends AbstractViewModel{
+
+    @Override
+    public void init() throws Exception {
+        view.setDimension(0, 0);
+        for(Iterator<Values> it=view.teacher.getIterator();it.hasNext();){
+            Values values = it.next();
+            ValuesHeader vh = new ValuesHeader(values.getString(LAST_NAME), values.getValues(TEACHER_ID));
+            view.addColumn(vh);
+        }
+        for(Iterator<Values> it=view.day_list.getIterator();it.hasNext();){
+            Values values = it.next();
+            ValuesHeader vh  = new ValuesHeader(values.getString(DAY_NAME),values.getValues(DAY_ID));
+            view.addRow(vh);
+            for(Iterator<Values> it2=view.bell_list.getIterator();it2.hasNext();){
+                Values values1 = it2.next();
+                values1.put(DAY_ID, values.get(DAY_ID));
+                vh = new ValuesHeader(values1.getString(TIME_START),values1.getValues(DAY_ID,BELL_ID));
+                view.addRow(vh);
+            }
+        }
+        view.rebuild();
+    }
+
+    Cell findCell(Values value){
+        int col;
+        for(col = 0 ;col<view.columnCount();col++){
+            ValuesHeader vh = (ValuesHeader)view.getColumnHeader(col);
+            if (vh.values.get(TEACHER_ID).equals(value.get(TEACHER_ID))){
+                break;
+            }
+        }
+        int row;
+        for(row = 0; row<view.rowCount();row++){
+            ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);
+            if (value.getValues(DAY_ID,BELL_ID).equals(vh.values)){
+                break;
+            }
+        }
+        
+        return view.cell(col,row);
+    }
+    
+    @Override
+    public void setDate(Date date) throws Exception {
+        Calendar c = Calendar.getInstance();
+        for(int row=0;row<view.rowCount();row++){
+            ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);
+            if (vh.values.isValue(DAY_ID) && !vh.values.containsKey(BELL_ID)){
+            c.setTime(date);
+            c.add(Calendar.DAY_OF_MONTH, vh.values.getInteger(DAY_ID)-1);
+            vh.caption = SIMPLE_DATE_FORMAT1.format(c.getTime());
+            }
+        }
+        
+        
+        view.clearItems();
+        for(Iterator<Values> it = getScheculeRecordset(date).getIterator();it.hasNext();){
+            Values values = it.next();
+            Cell cell = findCell(values);
+            if (cell!=null){
+                cell.addItem(view.createItem(values));
+            }
+        }
+        view.rebuild();
+        
+    }
 }

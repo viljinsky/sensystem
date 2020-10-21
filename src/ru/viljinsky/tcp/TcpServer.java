@@ -7,6 +7,7 @@
 package ru.viljinsky.tcp;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -46,6 +47,23 @@ public class TcpServer {
             try{
                 
                 responce(client, "client connected");
+                
+                
+//                int n;
+//                while(true){
+//                    StringBuilder stringBuilder = new StringBuilder();
+//                    byte[] buf = new byte[1024];
+//                    while((n = in.read(buf))>=0){
+//                        stringBuilder.append(new String(buf,0,n,"utf-8"));
+//                    }
+//                    line = stringBuilder.toString();
+//                    if(".".equals(line)){
+//                        out.println("by");
+//                        break;
+//                    }
+//                    out.println(line);
+//                    
+//                }
                 StringBuilder sb = new StringBuilder("**\n");
                 while((line = in.readLine())!=null){
                     System.out.println(line);
@@ -55,6 +73,7 @@ public class TcpServer {
                         break;
                     }
                     out.println(responce(client,line));
+                    if(in.ready()) continue;
                 }
                 System.out.println(sb.append("\n**").toString());
             } catch(Exception e){

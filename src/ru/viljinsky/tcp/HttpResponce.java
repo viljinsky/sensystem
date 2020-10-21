@@ -6,6 +6,7 @@
 
 package ru.viljinsky.tcp;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,14 +24,20 @@ public class HttpResponce {
     static final Map<Integer,String> map =new HashMap<>();
     static{
         map.put(RESULT_OK,"HTTP/1.1 200 OK");
-        map.put(NOT_FOUND,"HTTP/1.0 404 Not Found");
+        map.put(NOT_FOUND,"HTTP/1.1 200 OK");
+//        map.put(NOT_FOUND,"HTTP/1.0 404 Not Found");
     }
     
     protected int responceCode = RESULT_OK;
     
-    protected String responceText = "";
+    protected byte[] responce;
     
     protected String contentType = "text/html";
+    
+    @Override
+    public String toString(){
+        return String.format("%d %s", responceCode,new String(responce));
+    }
     
     public String header(){
         StringBuilder stringBuilder = new StringBuilder();
@@ -40,7 +47,7 @@ public class HttpResponce {
             stringBuilder.append("HTTP/1.1 200 OK").append("\n");
             
         stringBuilder.append("Content-Type: "+contentType+"; charset=UTF-8").append("\n");
-        stringBuilder.append("Content-Length: "+responceText.length()).append("\n");        
+        stringBuilder.append("Content-Length: "+responce.length).append("\n");        
         return stringBuilder.toString();
     }
 
@@ -53,15 +60,23 @@ public class HttpResponce {
 
     public HttpResponce(int responceCode, String responceText) {
         this.responceCode = responceCode;
-        this.responceText = responceText;
+        this.responce = responceText.getBytes();
     }
-    
+
+    public HttpResponce(byte[] responce) {
+        this.responce = responce;
+    }
+            
     public int length(){
-        return responceText.length();
+        return responce.length;
     }
     
     public String getText(){
-        return responceText;
+        try{
+            return new String(responce,"utf-8");
+        } catch (UnsupportedEncodingException e){
+            return e.getMessage();
+        }
     }
     
     public int getCode(){

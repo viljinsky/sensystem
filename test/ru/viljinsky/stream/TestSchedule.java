@@ -44,8 +44,10 @@ public class TestSchedule extends JPanel implements IDataModel{
     
     public void open2(Connection con) throws Exception{
         DB  db = new DB(con);
-        Recordset source = db.query("select null as date,a.day_id,a.bell_id,a.depart_id,a.group_id,a.subject_id,a.teacher_id,a.room_id,null as flag,week_id from schedule a inner join subject_group using(depart_id,group_id,subject_id)");
+        Recordset source = db.query("select null as date,a.day_id,a.bell_id,a.depart_id,a.group_id,a.subject_id,a.teacher_id,a.room_id,null as flag,week_id,0 as lesson_no from schedule a inner join subject_group using(depart_id,group_id,subject_id)");
+//        source.print();
         Recordset changes = new Document.Changes(con);
+//        changes.print();
         grid.setRecordset(new Document.ScheduleRecordset(source, changes, new Date()));
         grid1.setRecordset(changes);
     }

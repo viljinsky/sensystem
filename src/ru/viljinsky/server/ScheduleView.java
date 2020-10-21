@@ -6,6 +6,8 @@
 
 package ru.viljinsky.server;
 
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
@@ -25,7 +27,10 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
+import ru.viljinsky.cells7.Cell;
 import ru.viljinsky.cells7.Item;
 import ru.viljinsky.cells7.View;
 import ru.viljinsky.project2019.IDataModel;
@@ -121,9 +126,7 @@ class SkillFilter extends AbstractControl{
     public void valuesClick(Values values) {
         view.setDepartFilter(values);
     }
-       
-    
-    
+               
 }
 
 class CurriculumFilter extends AbstractControl{
@@ -151,12 +154,14 @@ class ViewControl extends AbstractControl{
     public static final String MODEL1 = "model1";
     public static final String MODEL2 = "model2";
     public static final String MODEL3 = "model3";
+    public static final String MODEL4 = "model4";
 
     public ViewControl(ScheduleView view) {
         super(view);
         add(createButton(MODEL1));
         add(createButton(MODEL2));
         add(createButton(MODEL3));
+        add(createButton(MODEL4));
     }
     
     @Override
@@ -172,6 +177,9 @@ class ViewControl extends AbstractControl{
                 break;
             case MODEL3:
                 model = new Model3();
+                break;
+            case MODEL4:
+                model = new Model4();
                 break;
             default:
                 return;
@@ -243,6 +251,10 @@ public class ScheduleView extends View implements IDataModel{
     
     
     Date date = new Date();
+    
+    public Date getDate(){
+        return date;
+    }
     
     public void setDate(Date date){
         try{
@@ -319,7 +331,10 @@ public class ScheduleView extends View implements IDataModel{
                 
                 if(room_name!=null)
                     g.drawString(room_name, bound.x+(bound.width-40), bound.y+y);
-                
+                if (selected){
+                    g.setColor(Color.BLUE);
+                    g.drawRect(bound.x+2,bound.y+2,bound.width-5,bound.height-5);
+                }
                 
             }
         }
@@ -333,15 +348,42 @@ public class ScheduleView extends View implements IDataModel{
     }
 
     @Override
+    public void cellClick(Cell cell, MouseEvent e) {
+        System.out.println(cell);
+       model.getColumnData(cell.col).print();
+       model.getRowData(cell.row).print();
+       for(Cell c:cells()){
+           if (c.col==cell.col || c.row==cell.row){
+               c.background = Color.LIGHT_GRAY;
+           } else {
+               c.background = null;
+           }
+       }
+       repaint();
+
+    }
+    
+    
+
+    @Override
     public void rowClick(int row, MouseEvent e) {
-//        Object p = model.getRowHeaderData(row);
-//        System.out.println(p);
+        model.getRowData(row).print();
+
+        for(Item item:items()){
+            item.selected = item.cell.row == row;
+        }
+//        for(Cell cell: cells()){
+//            cell.background = null;
+//            if (cell.row==row){
+//                cell.background = Color.GREEN;
+//            }
+//        }
+        repaint();
     }
 
     @Override
     public void columnClick(int column, MouseEvent e) {
-//        Object p = model.getColumnHeaderData(column);
-//        System.out.println(p);
+        model.getColumnData(column).print();
     }
                 
     public ScheduleView() {
@@ -415,14 +457,19 @@ public class ScheduleView extends View implements IDataModel{
         
         
         ScheduleView view = new ScheduleView();
-        JFrame frame = new JFrame();
+        ViewControl viewControl = new ViewControl(view);
+        JFrame frame = new JFrame();        
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new JScrollPane(view));
+        frame.add(viewControl,BorderLayout.PAGE_START);
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
         
         IDB db = new DB_JSON_decoder(new File(MyServer.SERVER_DATA));
         view.open(db);
+        view.setDate(new Date());
+        
+        frame.setVisible(true);
         
     }
     

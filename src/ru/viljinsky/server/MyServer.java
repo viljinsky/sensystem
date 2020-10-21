@@ -10,11 +10,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -79,12 +78,18 @@ public class MyServer extends JPanel implements IDataModel{
     void setStatusText(String text){
         view.statusBar.setStatusTest(text);
     }
-    class NotFound extends HttpResponce{
 
-        public NotFound() {
-            responceCode = NOT_FOUND;
+    public byte[] file_contents(File file) throws Exception {
+
+        FileInputStream in = new FileInputStream(file);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        int n;
+        byte[] data = new byte[1024];
+        while((n = in.read(data))!=-1){
+            out.write(data, 0, n);
         }
-        
+        return out.toByteArray();
     }
     
     class Page1 extends HttpResponce{
@@ -92,24 +97,10 @@ public class MyServer extends JPanel implements IDataModel{
         public Page1() throws Exception{
             File file = new File(SERVER_DATA);
             if (file.exists()){
-                StringBuilder stringBuilder = new StringBuilder();
-                try(
-                    InputStream in = new FileInputStream(file);){
-                    byte[] buf = new byte[200];
-                    int n;
-                    while((n = in.read(buf))>=0){
-                        String s = new String(buf,0,n,"utf-8");
-                        stringBuilder.append(s);
-                    }
-                    responceCode = RESULT_OK;
-                    responceText = stringBuilder.toString();
-                    System.out.println("file size :"+ responceText.length());
-                }
+                responce = file_contents(file);
             } else {
-                responceCode = NOT_FOUND;
-                responceText = "<p>файл данных не найден</p>";
+                responce = new String("<p>файл данных не найден</p>").getBytes();
             }
-            
         }
         
     }
@@ -139,17 +130,28 @@ public class MyServer extends JPanel implements IDataModel{
                 switch(request.method){
                     case "POST":                                                
                         
-                        if (request.hasParamByName("data")){
-                            open(request.paramByName("data"));                
-                            File file=new File(SERVER_DATA);
-                            try(
-                                    FileOutputStream out = new FileOutputStream(file);
-                                    BufferedWriter write = new BufferedWriter(new OutputStreamWriter(out,"utf-8"));){
-                                write.write(request.paramByName("data"));
-                            }
+                        switch(request.path){
+                            case "/":
+                                if (request.hasParamByName("data")){
+                                    open(request.paramByName("data"));                
+                                    File file=new File(SERVER_DATA);
+                                    try(
+                                        FileOutputStream out = new FileOutputStream(file);
+                                        BufferedWriter write = new BufferedWriter(new OutputStreamWriter(out,"utf-8"));){
+                                        write.write(request.paramByName("data"));
+                                    }
 
+                                }
+                                return new HttpResponce(HttpResponce.BAD_REQUEST,"param data not found");
+                            case "/page1":
+                                File file = new File(SERVER_DATA);
+                                if (file.exists())
+                                    return new HttpResponce(file_contents(file));
+                                else 
+                                    return new HttpResponce(HttpResponce.NOT_FOUND,"<p>not found</p>");
+                            
                         }
-                        return new HttpResponce(HttpResponce.BAD_REQUEST,"param data not found");
+                        
                         
                     case "GET":
                         
@@ -160,9 +162,13 @@ public class MyServer extends JPanel implements IDataModel{
                             case "/page2":
                                 return new HttpResponce(HttpResponce.RESULT_OK,"<p>page2</p>");
                             case "/page3":
-                                return new HttpResponce(HttpResponce.RESULT_OK,"<p>page3</p>");
+                                return new HttpResponce(HttpResponce.RESULT_OK,"<p>page3</p>");                                
                             default:
-                                return new NotFound();
+                                File file = new File(".",path);
+                                if (file.exists()){
+                                    return new HttpResponce(file_contents(file));
+                                }
+                                return new HttpResponce(HttpResponce.NOT_FOUND,"<p>not found</p>");
                         }                        
                         //break;
                 }
@@ -176,7 +182,9 @@ public class MyServer extends JPanel implements IDataModel{
     };
 
     SkillFilter skillFilter = new SkillFilter(view);
+    
     CurriculumFilter curriculumFilter = new CurriculumFilter(view);
+    
     public MyServer() {
         setPreferredSize(new Dimension(800,600));
         setLayout(new BorderLayout());
@@ -220,8 +228,7 @@ public class MyServer extends JPanel implements IDataModel{
             
         }.start();
     }
-    
-    
+        
     public static void main(String[] args) throws Exception{
         
         SwingUtilities.invokeLater(() -> {
@@ -231,7 +238,5 @@ public class MyServer extends JPanel implements IDataModel{
        
        
     }
-    
-    
-    
+            
 }

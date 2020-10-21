@@ -65,7 +65,7 @@ public class MainTCP extends JPanel{
                     public String responce(Socket client, String request) {
                         
                         messagePane.textOut(client.toString()+" \""+ request+"\"\n");                                                 
-                        return str("hello");
+                        return str("yes. it is.");
                     }
                     
                 };

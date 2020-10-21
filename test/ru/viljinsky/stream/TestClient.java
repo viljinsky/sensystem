@@ -6,8 +6,6 @@
 
 package ru.viljinsky.stream;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import ru.viljinsky.tcp.HttpResponce;
 import java.util.HashMap;
 import java.util.Map;
