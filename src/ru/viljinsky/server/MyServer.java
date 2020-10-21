@@ -57,8 +57,6 @@ public class MyServer extends JPanel implements IDataModel{
     
     public void open(IDB db) throws Exception{
         view.open(db);
-        skillFilter.setValues(view.skill);
-        curriculumFilter.setValues(view.curriculum);
         Recordset recordset = db.attributes();
         Values values = new Values();
         recordset.stream().forEach((p) -> {
@@ -181,9 +179,7 @@ public class MyServer extends JPanel implements IDataModel{
         
     };
 
-    SkillFilter skillFilter = new SkillFilter(view);
-    
-    CurriculumFilter curriculumFilter = new CurriculumFilter(view);
+//    CurriculumFilter curriculumFilter = new CurriculumFilter(view);
     
     public MyServer() {
         setPreferredSize(new Dimension(800,600));
@@ -193,8 +189,6 @@ public class MyServer extends JPanel implements IDataModel{
         add(view.statusBar,BorderLayout.PAGE_END);
         add(view.title,BorderLayout.PAGE_START);
         view.title.add(new ViewControl(view));
-        view.title.add(skillFilter);
-//        view.title.add(curriculumFilter);
     }
     
     public void showInFrame(){

@@ -87,6 +87,11 @@ public class DB_SQLITE implements IDB,IDataModel{
     public Recordset curiculum() throws Exception {
         return db.curriculum();
     }
+
+    @Override
+    public Recordset profile() throws Exception {
+        return db.profile();
+    }
     
     
 }

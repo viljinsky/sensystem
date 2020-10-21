@@ -16,10 +16,8 @@ import java.io.File;
 import java.net.URLDecoder;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -27,38 +25,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import org.json.JSONObject;
 import ru.viljinsky.project2019.IDataModel;
-import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.StatusBar;
-import ru.viljinsky.project2019.Values;
 import ru.viljinsky.sensystem.ValuesPanel;
 import static ru.viljinsky.server.MyServer.SERVER_DATA;
 import ru.viljinsky.tcp.HttpClient;
 import ru.viljinsky.tcp.HttpResponce;
-
-
-class TeacherFilter extends JComponent implements IDataModel{
-
-    String displayName = LAST_NAME;
-    Object keyName= TEACHER_ID;
-    ScheduleView view;
-    
-    public TeacherFilter(ScheduleView view) {
-        this.view = view;
-        setLayout(new FlowLayout());
-    }
-    
-    JButton createButtom(Values values){
-        JButton button = new JButton(values.getString(LAST_NAME));
-        return button;
-    }
-    public void setValues(Recordset recordset){
-        removeAll();
-        for(Iterator<Values> it = recordset.getIterator();it.hasNext();){
-            add(createButtom(it.next()));
-        }
-    }
-}
-
 
 
 /**
@@ -68,21 +39,21 @@ class TeacherFilter extends JComponent implements IDataModel{
 public class LocalClient extends JPanel implements IDataModel{
     
     String host = "http://localhost:3345/page1";
+    
     String login = "admin";
+    
     String password = "sensystem";
-    
-    
+        
     static final String RELOAD  = "reload";
+    
     static final String CONNECT = "connect";
-    
-   
-    
+       
     ScheduleView scheduleView=new ScheduleView();
-    SkillFilter skillFilter = new SkillFilter(scheduleView);
-    TeacherFilter teacherFilter = new TeacherFilter(scheduleView);
+    
     ViewControl viewControl = new ViewControl(scheduleView);
     
     StatusBar statusBar = new StatusBar();
+    
     CommandBar commandBar = new CommandBar(RELOAD,CONNECT){
 
         @Override
@@ -108,12 +79,11 @@ public class LocalClient extends JPanel implements IDataModel{
         
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(new JScrollPane(scheduleView));        
-        panel.add(teacherFilter,BorderLayout.PAGE_START);
         panel.add(viewControl,BorderLayout.PAGE_END);
         add(panel);
         add(statusBar,BorderLayout.PAGE_END);
         add(commandBar,BorderLayout.PAGE_START);
-//        load();        
+        
     }
     
     void showMessage(String message){
@@ -188,8 +158,6 @@ public class LocalClient extends JPanel implements IDataModel{
             IDB db = new DB_JSON_decoder(responce.getText());
             scheduleView.open(db);
             scheduleView.setDate(date);
-//            skillFilter.setValues(db.skill().select(SKILL_ID,SKILL_NAME));
-            teacherFilter.setValues(db.teacher());
         } else {
             showMessage(responce.toString());
         }

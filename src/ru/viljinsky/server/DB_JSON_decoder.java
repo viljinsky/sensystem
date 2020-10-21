@@ -227,6 +227,11 @@ public class DB_JSON_decoder implements IDB{
     public Recordset curiculum() throws Exception {
         return getRecordset(CURRICULUM);
     }
+
+    @Override
+    public Recordset profile() throws Exception {
+        return getRecordset(PROFILE);
+    }
     
     
     

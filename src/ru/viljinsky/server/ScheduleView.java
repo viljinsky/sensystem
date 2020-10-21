@@ -7,27 +7,20 @@
 package ru.viljinsky.server;
 
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 import ru.viljinsky.cells7.Cell;
@@ -62,133 +55,6 @@ class StatusBar extends JComponent{
 
 }
 
-abstract class AbstractControl extends JComponent implements IDataModel{
-    
-    ScheduleView view;
-
-    public void valuesClick(Values values){
-    }
-    
-    public void doCommand(String comand){
-    }
-    public AbstractControl(ScheduleView view) {
-        this.view = view;
-        setLayout(new FlowLayout(FlowLayout.LEFT));
-    }
-
-    class ValuesButton extends JButton{
-        Values values;
-        public ValuesButton(String name,Values values) {
-            super(name);
-            this.values = values;
-            addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    valuesClick(values);
-                }
-            });
-        }
-    }
-    
-        
-    JButton createButton(String command){
-        Action a = new AbstractAction(command) {
-            
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                doCommand(e.getActionCommand());
-            }
-        };
-                
-        JButton button = new JButton(a);
-        return button;
-    }
-    
-}
-
-class SkillFilter extends AbstractControl{
-
-    public SkillFilter(ScheduleView view) {
-        super(view);
-    }
-
-    public void setValues(Recordset recordset){
-        removeAll();
-        add(new ValuesButton("Все", null));
-        for(int i=0;i<recordset.size();i++){
-            Values values = recordset.getValues(i);
-            add(new ValuesButton((String)values.get(SKILL_NAME), values));
-        }        
-    }
-
-    @Override
-    public void valuesClick(Values values) {
-        view.setDepartFilter(values);
-    }
-               
-}
-
-class CurriculumFilter extends AbstractControl{
-    
-    @Override
-    public void valuesClick(Values values){
-        view.setDepartFilter(values);
-    }
-        
-    public CurriculumFilter(ScheduleView view) {
-        super(view);
-    }
-    
-    public void setValues(Recordset recordset){
-        removeAll();
-        for(int i=0;i<recordset.size();i++){
-            Values values = recordset.getValues(i);
-            add(new ValuesButton((String)values.get(CURRICULUM_NAME),values.getValues(CURRICULUM_ID)));
-        }
-    }
-
-}
-class ViewControl extends AbstractControl{
-    
-    public static final String MODEL1 = "model1";
-    public static final String MODEL2 = "model2";
-    public static final String MODEL3 = "model3";
-    public static final String MODEL4 = "model4";
-
-    public ViewControl(ScheduleView view) {
-        super(view);
-        add(createButton(MODEL1));
-        add(createButton(MODEL2));
-        add(createButton(MODEL3));
-        add(createButton(MODEL4));
-    }
-    
-    @Override
-    public void doCommand(String command){
-        System.out.println(command);
-        ViewModel model;
-        switch(command){
-            case MODEL1:
-                model = new Model1();
-                break;
-            case MODEL2:
-                model = new Model2();
-                break;
-            case MODEL3:
-                model = new Model3();
-                break;
-            case MODEL4:
-                model = new Model4();
-                break;
-            default:
-                return;
-        }
-        view.setModel(model);
-    }
-    
-}
-
 class ScheduleTitle extends JComponent implements IDataModel{
     private JLabel schedulePeriod = new JLabel("schedulePeriod");
 
@@ -198,14 +64,12 @@ class ScheduleTitle extends JComponent implements IDataModel{
         schedulePeriod.setHorizontalAlignment(JLabel.CENTER);
         schedulePeriod.setBorder(new EmptyBorder(12,6,12,16));
         add(schedulePeriod);
-//        add(new ViewControl());
     }
     
     public void setValues(Values attributes){
         String date1 = attributes.getString(DATE_BEGIN);
         String date2 = attributes.getString(DATE_END);
-        schedulePeriod.setText(date1+" "+date2);
-        
+        schedulePeriod.setText(date1+" "+date2);        
     }
     
     public void setDate(Date date){
@@ -221,26 +85,14 @@ class ScheduleTitle extends JComponent implements IDataModel{
 
 public class ScheduleView extends View implements IDataModel{
     
-    Date date_begin,date_end;
+    Date date_begin,date_end,date = new Date();;
     
-    Values departFilter = null;//new Values(CURRICULUM_ID,1);
+    Recordset day_list,bell_list,depart,room,subject,group_label,schedule,changes,building,teacher,skill,curriculum,profile;
     
-    public void setDepartFilter(Values filter){
-        departFilter = filter;
-        try{
-            model.init();
-            model.setDate(date);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-        
-    }
-    
-    Recordset day_list,bell_list,depart,room,subject,group_label,schedule,changes,building,teacher,skill,curriculum;
     Values attributes;
-    
-    
+       
     ScheduleTitle title = new ScheduleTitle();
+    
     ViewModel model;
     
     StatusBar statusBar = new StatusBar();
@@ -249,16 +101,13 @@ public class ScheduleView extends View implements IDataModel{
         statusBar.setStatusTest(str);
     }
     
-    
-    Date date = new Date();
-    
     public Date getDate(){
         return date;
     }
     
     public void setDate(Date date){
+        
         try{
-
             Calendar c = Calendar.getInstance();
             c.setTime(date);
             c.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
@@ -268,6 +117,7 @@ public class ScheduleView extends View implements IDataModel{
         } catch (Exception e){
             e.printStackTrace();
         }
+        
     }
     
     public Item createItem(Values values){
@@ -372,12 +222,7 @@ public class ScheduleView extends View implements IDataModel{
         for(Item item:items()){
             item.selected = item.cell.row == row;
         }
-//        for(Cell cell: cells()){
-//            cell.background = null;
-//            if (cell.row==row){
-//                cell.background = Color.GREEN;
-//            }
-//        }
+        
         repaint();
     }
 
@@ -440,7 +285,7 @@ public class ScheduleView extends View implements IDataModel{
         }
         skill = db.skill();
         curriculum = db.curiculum();
-//        model.open(idb);
+        profile = db.profile();
         
         date_begin = new SimpleDateFormat("yyyy-MM-dd").parse(attributes.getString(DATE_BEGIN));
         date_end = new SimpleDateFormat("yyyy-MM-dd").parse(attributes.getString(DATE_END));
@@ -452,16 +297,18 @@ public class ScheduleView extends View implements IDataModel{
         
         periodChange();
     }
+    
+    static ScheduleView view;
             
     public static void main(String[] args)throws Exception{
-        
-        
-        ScheduleView view = new ScheduleView();
+               
+        view = new ScheduleView();
         ViewControl viewControl = new ViewControl(view);
         JFrame frame = new JFrame();        
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(new JScrollPane(view));
         frame.add(viewControl,BorderLayout.PAGE_START);
+                
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
         
