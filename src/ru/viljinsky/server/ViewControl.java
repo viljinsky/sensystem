@@ -17,7 +17,7 @@ import javax.swing.JToggleButton;
  *
  * @author viljinsky
  */
-class ViewControl extends JPanel {
+public class ViewControl extends JPanel {
     public static final String MODEL1 = "model1";
     public static final String MODEL2 = "model2";
     public static final String MODEL3 = "model3";
