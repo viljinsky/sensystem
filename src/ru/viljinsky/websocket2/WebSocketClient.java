@@ -18,8 +18,8 @@ import static java.util.UUID.randomUUID;
  * @author viljinsky
  */
 public class WebSocketClient implements Runnable {
-    String host;
-    int port;
+    private String host;
+    private int port;
     
     static final String UTF8 = "utf-8";
     static final String REQUEST = 
@@ -76,7 +76,7 @@ public class WebSocketClient implements Runnable {
 
     void listen() {
         try {
-        while (socket!=null) {
+        while (isConected()) {
             onListen();
             try(ByteArrayOutputStream data = new ByteArrayOutputStream();){
                 byte[] buf = new byte[1024];
@@ -111,11 +111,11 @@ public class WebSocketClient implements Runnable {
     }
     
     public boolean isClosed(){
-        return socket.isClosed();
+        return socket==null || socket.isClosed();
     }
     
     public boolean isConected(){
-        return socket.isConnected();
+        return socket!=null && socket.isConnected();
     }
     
     public void by(){

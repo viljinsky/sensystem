@@ -25,7 +25,10 @@ import ru.viljinsky.server.MessagePane;
  */
 public class MainFrame  extends JPanel{
     
-    WebSocketServer srv = new WebSocketServer(3345){
+    public static final int port = 3345;
+    public static final String host = "localhost";
+    
+    WebSocketServer srv = new WebSocketServer(port){
 
         @Override
         public void onError(String message) {
@@ -58,22 +61,11 @@ public class MainFrame  extends JPanel{
     };
         
     void createClient(){
-        WebSocketFrame child = new WebSocketFrame();
+        WebSocketFrame child = new WebSocketFrame(host,port);
         child.showInFrame(getParent());
         child.waitServer();
     }
     
-    void createClient2(){
-        int x=100,y=100;
-        for(int i=0;i<4;i++){
-            WebSocketFrame child = new WebSocketFrame();
-            child.showInFrame(child);
-            child.frame.setLocation(x, y);
-            x += 50;
-            y += 50;
-            child.connect();
-        }
-    }
     
     void json() throws Exception{
         File file = new File("server_data.json");
@@ -94,19 +86,42 @@ public class MainFrame  extends JPanel{
     int message_count = 0;
     int client_count = 0;
     static final String START = "start";
+    static final String STOP = "stop";
     static final String BY = "by";
     static final String LIST = "list";
     static final String MESSAGE = "message";
     
-    CommandBar commandBar = new CommandBar(START,LIST,BY,null,MESSAGE, "client1",null,"client2","json",null,"clear"){
+    CommandBar commandBar = new CommandBar(START,STOP,LIST,BY,null,MESSAGE, "client1",null,"client2","json",null,"clear"){
 
         @Override
         public void doCommand(String command) {
             try{
                 switch(command){
+
+                    case START:
+                        srv.start();
+                        break;
+                        
+                    case STOP:
+                        srv.stop();
+                        break;
+
+                    case LIST:
+                        srv.list();
+                        break;
+                        
+                    case BY:
+                        srv.by();
+                        break;
+                                                
+                    case MESSAGE:
+                        srv.message("messsage"+(++message_count));
+                        break;
+                    
                     case "clear":
                         messagePane.clear();
                         break;
+                        
                     case "client2":
                         new Thread(){
 
@@ -118,22 +133,7 @@ public class MainFrame  extends JPanel{
                             
                         }.start();
                         break;
-                    case LIST:
-                        srv.list();
-                        break;
-                        
-                    case BY:
-                        srv.by();
-                        break;
-                        
-                    case START:
-                        srv.start();
-                        break;
-                        
-                    case MESSAGE:
-                        srv.message("messsage"+(++message_count));
-                        break;
-                        
+                                                                        
                     case "client1":
                         createClient();
                         break;

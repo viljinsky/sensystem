@@ -25,6 +25,12 @@ import java.util.List;
  */
 class WebSocketServer implements Runnable {
     
+    ServerSocket server;
+    
+    public boolean isClosed(){
+        return server.isClosed();
+    }
+    
     class Request extends HashMap<String, String>{
         
         boolean isWebSocket(){
@@ -162,21 +168,39 @@ class WebSocketServer implements Runnable {
     public void onClientError(Socket soket, String message) {
     }
 
+    
     @Override
     public void run() {
         try {
-            ServerSocket server = new ServerSocket(port);
+            
+            server = new ServerSocket(port);
             onStart();
             while (true) {
                 new ClientHandler(server.accept());
             }
+            
         } catch (Exception e) {
+            
             onError(e.getMessage());
         }
     }
 
+    Thread t;
+    
     public void start() {
-        new Thread(this).start();
+        t =  new Thread(this);
+        t.start();
+    }
+    
+    public void stop(){
+        try{
+            server.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        if(t!=null){
+            t.interrupt();
+        }
     }
     
     public void by(){
@@ -190,6 +214,12 @@ class WebSocketServer implements Runnable {
             } finally{
                 it.remove();
             }
+        }
+        try{
+            server.close();
+            t.interrupt();
+        } catch(Exception e){
+            e.printStackTrace();
         }
     }
     

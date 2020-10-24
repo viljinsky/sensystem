@@ -14,6 +14,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import ru.viljinsky.server.DB_JSON_decoder;
 import ru.viljinsky.server.IDB;
@@ -26,7 +27,10 @@ import ru.viljinsky.server.ViewControl;
  */
 public class WebSocketFrame2 extends JPanel{
     
-    WebSocketClient client = new WebSocketClient("localhost",3345){
+    String host = "localhost";
+    int port = 3345;
+    
+    WebSocketClient client = new WebSocketClient(host,port){
 
         @Override
         void onStopListen() {
@@ -67,8 +71,11 @@ public class WebSocketFrame2 extends JPanel{
         }
         
     };
+    
     ScheduleView view = new ScheduleView();
+    
     ViewControl viewControl = new ViewControl(view);
+    
     JLabel statusBar = new JLabel("status bar");
 
     public WebSocketFrame2() {
@@ -83,16 +90,46 @@ public class WebSocketFrame2 extends JPanel{
 
         @Override
         public void windowClosing(WindowEvent e) {
+            t.interrupt();
             try{
                 client.by();
+                client.close();
+                client.socket = null;
+                
+                
             } catch(Exception ex){
                 statusBar.setText(ex.getMessage());
             }
-            client.close();
         }
         
     };
     
+    Thread t;
+    
+    void waitServer(){
+        t = new Thread(){
+
+            @Override
+            public void run() {
+                while(client.socket==null){
+                    client.run();
+                    if (client.isConected()) break;
+                    long t = System.currentTimeMillis();
+                    while(System.currentTimeMillis()<t+1000){
+                    }
+                    System.out.println("next");
+                    if (isInterrupted()){
+                        System.out.println("interapted");
+                        break;
+                    }
+                }
+                
+            }
+                                    
+        };
+        t.start();
+    }
+            
     public void showInFrame(String titel){
         JFrame frame = new JFrame(titel);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -101,12 +138,18 @@ public class WebSocketFrame2 extends JPanel{
         frame.setLocationRelativeTo(null);
         frame.addWindowListener(windowAdapter);
         frame.setVisible(true);
-        client.run();
+        waitServer();
+//        client.run();
     }
     
     public static void main(String[] args){
-        WebSocketFrame2 frame = new WebSocketFrame2();
-        frame.showInFrame("Составитель расписания (клиент)");
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                new WebSocketFrame2().showInFrame("Client");
+            }
+        });
     }
     
 }
