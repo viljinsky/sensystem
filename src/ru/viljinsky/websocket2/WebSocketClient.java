@@ -122,6 +122,7 @@ public class WebSocketClient implements Runnable {
     public void by(){
         try{
             out.write("by".getBytes(UTF8));
+            out.write(0);
             out.flush();
         } catch (IOException e){
             System.err.println(e.getMessage());
