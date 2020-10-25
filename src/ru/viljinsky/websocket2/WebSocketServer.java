@@ -71,12 +71,9 @@ class WebSocketServer implements Runnable {
             in = socket.getInputStream();
             out = socket.getOutputStream();
             
-        //    request = new Request(in);
-            
             list.add(ClientHandler.this);
             listen();
             onClient(socket);
-      //      onMessage(request.toString());
             
         }
 
@@ -194,34 +191,23 @@ class WebSocketServer implements Runnable {
     
     public void stop(){
         try{
+            for(Iterator<ClientHandler> it = list.iterator();it.hasNext();){
+                ClientHandler h = it.next();
+                try{
+                    h.send("by");
+                    h.close();
+                } catch (Exception e){
+                    System.err.println("by error : "+e.getMessage());
+                } finally{
+                    it.remove();
+                }
+            }
             server.close();
         } catch (Exception e){
             e.printStackTrace();
         }
-        if(t!=null){
-            t.interrupt();
-        }
     }
     
-    public void by(){
-        for(Iterator<ClientHandler> it = list.iterator();it.hasNext();){
-            ClientHandler h = it.next();
-            try{
-                h.send("by");
-                h.close();
-            } catch (Exception e){
-                System.err.println("by error : "+e.getMessage());
-            } finally{
-                it.remove();
-            }
-        }
-        try{
-            server.close();
-            t.interrupt();
-        } catch(Exception e){
-            e.printStackTrace();
-        }
-    }
     
     public void list(){
         for(ClientHandler h: list){

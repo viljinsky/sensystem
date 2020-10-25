@@ -13,7 +13,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.text.StyleConstants;
+import javax.swing.SwingUtilities;
 import ru.viljinsky.server.CommandBar;
 import ru.viljinsky.server.MessagePane;
 
@@ -25,37 +25,58 @@ class WebSocketFrame extends JPanel {
     
     JFrame frame;
     
-    WebSocketClient client;
-    
+    WebSocketClient         client = new WebSocketClient("localhost", 3345){
+            
+            @Override
+            void onStopListen() {
+                client.close();
+                textOut("SERVER SEND BY");
+            }
+
+            @Override
+            void onListen() {
+                textOut("LISTEN...");
+            }
+
+            @Override
+            void onError(String message) {
+                textOut("ERROR   : " + message);
+            }
+
+            @Override
+            void onMessage(String message) {
+                textOut("MESSAGE : " + message);
+            }
+            
+        };
+
     public void connect() {
         if (client.isClosed()){
             client.run();
         }
     }
     
-    class TClient extends Thread{
-
-        @Override
-        public void run() {
-            textOut("waiting server");
-            while (!client.isConected()) {
-                client.run();
-                long t = System.currentTimeMillis();
-                while (System.currentTimeMillis() < (t + 1000)) {
-                }
-                if (isInterrupted()){
-                    textOut("interapted");
-                    break;
-                }
-            }
-        }
-        
-    }
     
-    TClient t;
+    Thread t;
 
     public void waitServer() {
-        t = new TClient();
+        t = new Thread(){
+
+            @Override
+            public void run() {
+                try{
+                    while(!client.isConected()){
+                        client.run();
+                        join(1000);
+                        System.out.println("next");
+                    }
+                } catch(InterruptedException e){
+                    System.out.println("interapted");    
+                }
+                
+            }
+                                    
+        };
         t.start();
     }
     
@@ -78,7 +99,8 @@ class WebSocketFrame extends JPanel {
                 switch (command) {
                     
                     case NOWAIT:
-                        noWait();
+                        t.interrupt();
+//                        noWait();
                         break;
                         
                     case WAIT:
@@ -116,35 +138,10 @@ class WebSocketFrame extends JPanel {
         messagePane.textOut(message + "\n");
     }
 
-    public WebSocketFrame(String host,int port) {
-        
+    public WebSocketFrame() {        
         setLayout(new BorderLayout());
         add(commandBar, BorderLayout.PAGE_START);
         add(messagePane);
-        client = new WebSocketClient(host, port){
-            
-            @Override
-            void onStopListen() {
-                client.close();
-                textOut("SERVER SEND BY");
-            }
-
-            @Override
-            void onListen() {
-                textOut("LISTEN...");
-            }
-
-            @Override
-            void onError(String message) {
-                textOut("ERROR   : " + message);
-            }
-
-            @Override
-            void onMessage(String message) {
-                textOut("MESSAGE : " + message);
-            }
-            
-        };
     }
 
     public void showInFrame(Component parent) {
@@ -158,20 +155,28 @@ class WebSocketFrame extends JPanel {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                noWait();
+                t.interrupt();
+//                noWait();
                 if (client != null) {
                     try {
                         client.by();
                         client.close();
+                        client.socket = null;
                     } catch (Exception ex) {
                     }
                 }
             }
         });
-//        waitServer();
+        waitServer();
     }
     
     public static void main(String[] args){
-        new WebSocketFrame(MainFrame.host,MainFrame.port).showInFrame(null);
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                new WebSocketFrame().showInFrame(null);
+            }
+        });
     }
 }

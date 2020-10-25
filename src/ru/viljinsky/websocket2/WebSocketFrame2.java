@@ -9,17 +9,18 @@ package ru.viljinsky.websocket2;
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Date;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
 import ru.viljinsky.server.DB_JSON_decoder;
 import ru.viljinsky.server.IDB;
 import ru.viljinsky.server.ScheduleView;
+import ru.viljinsky.server.StatusBar;
 import ru.viljinsky.server.ViewControl;
+
 
 /**
  *
@@ -76,17 +77,16 @@ public class WebSocketFrame2 extends JPanel{
     
     ViewControl viewControl = new ViewControl(view);
     
-    JLabel statusBar = new JLabel("status bar");
+    StatusBar statusBar = new StatusBar();
 
     public WebSocketFrame2() {
         setLayout(new BorderLayout());
         add(new JScrollPane(view));
         add(viewControl,BorderLayout.PAGE_START);
-        statusBar.setBorder(new EmptyBorder(12,6,12,16));
         add(statusBar,BorderLayout.PAGE_END);
     }
     
-    WindowAdapter windowAdapter = new WindowAdapter() {
+    WindowListener adapter = new WindowAdapter() {
 
         @Override
         public void windowClosing(WindowEvent e) {
@@ -94,9 +94,7 @@ public class WebSocketFrame2 extends JPanel{
             try{
                 client.by();
                 client.close();
-                client.socket = null;
-                
-                
+                client.socket = null;                                
             } catch(Exception ex){
                 statusBar.setText(ex.getMessage());
             }
@@ -111,19 +109,15 @@ public class WebSocketFrame2 extends JPanel{
 
             @Override
             public void run() {
-                while(client.socket==null){
-                    client.run();
-                    if (client.isConected()) break;
-                    long t = System.currentTimeMillis();
-                    while(System.currentTimeMillis()<t+1000){
+                try{
+                    while(!isInterrupted()){
+                        client.run();
+                        join(1000);
+                        System.out.println("next");
                     }
-                    System.out.println("next");
-                    if (isInterrupted()){
-                        System.out.println("interapted");
-                        break;
-                    }
+                } catch(InterruptedException e){
+                    System.out.println("interapted");
                 }
-                
             }
                                     
         };
@@ -136,10 +130,9 @@ public class WebSocketFrame2 extends JPanel{
         frame.setContentPane(this);
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
-        frame.addWindowListener(windowAdapter);
         frame.setVisible(true);
         waitServer();
-//        client.run();
+        frame.addWindowListener(adapter);
     }
     
     public static void main(String[] args){

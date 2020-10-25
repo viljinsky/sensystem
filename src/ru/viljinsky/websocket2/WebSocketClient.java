@@ -18,8 +18,9 @@ import static java.util.UUID.randomUUID;
  * @author viljinsky
  */
 public class WebSocketClient implements Runnable {
-    private String host;
-    private int port;
+    
+    private final String host;
+    private final int port;
     
     static final String UTF8 = "utf-8";
     static final String REQUEST = 

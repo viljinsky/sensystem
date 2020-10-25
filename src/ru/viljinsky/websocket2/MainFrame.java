@@ -7,6 +7,9 @@
 package ru.viljinsky.websocket2;
 
 import java.awt.BorderLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,7 +20,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import ru.viljinsky.server.CommandBar;
 import ru.viljinsky.server.MessagePane;
-
+import ru.viljinsky.server.StatusBar;
 
 /**
  *
@@ -26,6 +29,7 @@ import ru.viljinsky.server.MessagePane;
 public class MainFrame  extends JPanel{
     
     public static final int port = 3345;
+    
     public static final String host = "localhost";
     
     WebSocketServer srv = new WebSocketServer(port){
@@ -60,13 +64,6 @@ public class MainFrame  extends JPanel{
         
     };
         
-    void createClient(){
-        WebSocketFrame child = new WebSocketFrame(host,port);
-        child.showInFrame(getParent());
-        child.waitServer();
-    }
-    
-    
     void json() throws Exception{
         File file = new File("server_data.json");
         if (file.exists()){
@@ -87,11 +84,10 @@ public class MainFrame  extends JPanel{
     int client_count = 0;
     static final String START = "start";
     static final String STOP = "stop";
-    static final String BY = "by";
     static final String LIST = "list";
     static final String MESSAGE = "message";
     
-    CommandBar commandBar = new CommandBar(START,STOP,LIST,BY,null,MESSAGE, "client1",null,"client2","json",null,"clear"){
+    CommandBar commandBar = new CommandBar(START,STOP,LIST,null,MESSAGE, "client1",null,"client2","client3","json",null,"clear"){
 
         @Override
         public void doCommand(String command) {
@@ -110,10 +106,6 @@ public class MainFrame  extends JPanel{
                         srv.list();
                         break;
                         
-                    case BY:
-                        srv.by();
-                        break;
-                                                
                     case MESSAGE:
                         srv.message("messsage"+(++message_count));
                         break;
@@ -123,19 +115,15 @@ public class MainFrame  extends JPanel{
                         break;
                         
                     case "client2":
-                        new Thread(){
-
-                            @Override
-                            public void run() {
-                                new WebSocketFrame2().showInFrame("Клиент "+(++client_count));
-                            }
-                            
-                            
-                        }.start();
+                        new WebSocketFrame2().showInFrame("Клиент "+(++client_count));
                         break;
                                                                         
                     case "client1":
-                        createClient();
+                        new WebSocketFrame().showInFrame(getParent());
+                        break;
+                        
+                    case "client3":
+                        new WebSocketFrame3().showInFrame(getParent());
                         break;
                         
                     case "json":
@@ -148,6 +136,8 @@ public class MainFrame  extends JPanel{
         }
         
     };
+    
+    StatusBar statusBar = new StatusBar();
     
     MessagePane messagePane = new MessagePane();
     
@@ -163,15 +153,30 @@ public class MainFrame  extends JPanel{
         setLayout(new BorderLayout());
         add(commandBar,BorderLayout.PAGE_START);
         add(messagePane);
+        add(statusBar,BorderLayout.PAGE_END);
     }
+    
+    WindowListener adapter = new WindowAdapter() {
+
+        @Override
+        public void windowClosing(WindowEvent e) {
+            srv.stop();
+        }
         
-    public static void main(String[] args){
+    };
+    
+    public void showInFrame(){
         JFrame frame = new JFrame("Server");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setContentPane(new MainFrame());
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+        frame.addWindowListener(adapter);        
+    }
+        
+    public static void main(String[] args){
+        new MainFrame().showInFrame();
     }
     
 }

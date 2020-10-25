@@ -35,25 +35,6 @@ import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_MOVE_FROM;
 import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_MOVE_TO;
 import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_REPLACE;
 
-/**
- *
- * @author viljinsky
- */
-
-class StatusBar extends JComponent{
-    JLabel label = new JLabel("statusbar");
-
-    public StatusBar() {
-        setBorder(BorderFactory.createEtchedBorder());
-        setLayout(new FlowLayout(FlowLayout.LEFT, 12, 6));
-        add(label);
-    }
-
-    public void setStatusTest(String str){
-        label.setText(str);
-    }
-
-}
 
 class ScheduleTitle extends JComponent implements IDataModel{
     private JLabel schedulePeriod = new JLabel("schedulePeriod");
@@ -98,7 +79,7 @@ public class ScheduleView extends View implements IDataModel{
     StatusBar statusBar = new StatusBar();
 
     public void setStatusTest(String str) {
-        statusBar.setStatusTest(str);
+        statusBar.setText(str);
     }
     
     public Date getDate(){

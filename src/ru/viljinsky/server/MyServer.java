@@ -74,7 +74,7 @@ public class MyServer extends JPanel implements IDataModel{
     }
     
     void setStatusText(String text){
-        view.statusBar.setStatusTest(text);
+        view.statusBar.setText(text);
     }
 
     public byte[] file_contents(File file) throws Exception {
