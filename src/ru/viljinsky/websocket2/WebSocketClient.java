@@ -17,7 +17,18 @@ import static java.util.UUID.randomUUID;
  *
  * @author viljinsky
  */
-public class WebSocketClient implements Runnable {
+public class WebSocketClient{
+    
+    public static final int CLOSED =0;
+    public static final int WAIT = 1;
+    public static final int READY = 2;
+    public static final int SERVER_DISCONNECT = 3;
+    
+    public void onMessage(String message){
+    }
+    
+    public void onStateChange(int state){
+    }
     
     private final String host;
     private final int port;
@@ -41,66 +52,87 @@ public class WebSocketClient implements Runnable {
     InputStream in;
     OutputStream out;
 
-    @Override
-    public void run() {
-        try {
-            socket = new Socket(host, port);
-            in = socket.getInputStream();
-            out = socket.getOutputStream();
-            out.write(String.format(REQUEST,host,randomUUID()).getBytes(UTF8));
-            out.write(0);
-            out.flush();
-            listen();
-        } catch (Exception e) {
-            onError(e.getMessage());
+    Thread t ;
+    
+    public void start(){
+        t = new Thread(){
+
+            @Override
+            public void run() {
+                while(!isInterrupted()){
+                    try{
+                        System.out.println("wait connection...");
+                        onStateChange(WAIT);
+                        socket = new Socket(host, port);
+                        in = socket.getInputStream();
+                        out = socket.getOutputStream();
+                        out.write(String.format(REQUEST,host,randomUUID()).getBytes(UTF8));
+                        out.write(0);
+                        out.flush();
+                        listen();
+                        join(1000);
+                    } catch (InterruptedException e){
+                        System.out.println("no connection");
+                        onStateChange(CLOSED);
+                        break;
+                    } catch (IOException e){
+                    }
+                }
+            }
+            
+        };
+        t.start();
+    }
+    
+    public void stop(){
+        try{
+            if (t!=null){
+                t.interrupt();
+                System.out.println("stop");
+                onStateChange(CLOSED);
+                if (isConected()){
+                    send("by");
+                    socket.close();
+                    socket = null;
+                }   
+            }
+        } catch (Exception e){
         }
     }
 
-    void onMessage(String message) {
-    }
-
-    void onError(String message) {
-    }
-
-    void onListen() {
-    }
-    
-    void onStopListen(){
-        System.out.println("server stop conection");
-    }
-    
     public void send(String message) throws Exception{
         out.write(message.getBytes(UTF8));
         out.write(0);
         out.flush();
+        System.out.println("send message");
     }
 
     void listen() {
         try {
-        while (isConected()) {
-            onListen();
-            try(ByteArrayOutputStream data = new ByteArrayOutputStream();){
-                byte[] buf = new byte[1024];
-                int n;
-                while((n=in.read(buf))!=-1){
-                    data.write(buf, 0, n);
-                    if(buf[n-1]==0) break;
-                }
+            while (isConected()) {
+                System.out.println("listen.");
+                onStateChange(READY);
+                try(ByteArrayOutputStream data = new ByteArrayOutputStream();){
+                    byte[] buf = new byte[1024];
+                    int n;
+                    while((n=in.read(buf))!=-1){
+                        data.write(buf, 0, n);
+                        if(buf[n-1]==0) break;
+                    }
                     if (data.size() == 0) {
                         continue;
                     }
-                    String msg = new String(data.toByteArray(),"utf-8");
-                if (msg.startsWith("by")){ 
-                    close();
-                    break;
+                    String message = new String(data.toByteArray(),UTF8);
+                    if (message.startsWith("by")){ 
+                        close();
+                        break;
+                    }
+                    System.out.println("message");
+                    onMessage(message);
                 }
-                onMessage(msg);
             }
+        } catch (IOException e) {
         }
-        onStopListen();
-        } catch (Exception e) {
-            onError(e.getMessage());
-    }
     }
 
     public void close() {
@@ -111,6 +143,7 @@ public class WebSocketClient implements Runnable {
         } catch (IOException e) {
         } finally{
             socket = null;
+            onStateChange(CLOSED);
         }
     }
     
@@ -121,16 +154,5 @@ public class WebSocketClient implements Runnable {
     public boolean isConected(){
         return socket!=null && socket.isConnected();
     }
-    
-//    public void by(){
-//        try{
-//            out.write("by".getBytes(UTF8));
-//            out.write(0);
-//            out.flush();
-//        } catch (IOException e){
-//            System.err.println(e.getMessage());
-//        }
-//        
-//    }
     
 }

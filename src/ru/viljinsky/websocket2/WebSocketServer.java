@@ -6,233 +6,208 @@
 
 package ru.viljinsky.websocket2;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  *
  * @author viljinsky
  */
-class WebSocketServer implements Runnable {
-    
+abstract class WebSocketServer extends ArrayList {
+    static final String UTF8 = "utf-8";
     ServerSocket server;
     
-    public boolean isClosed(){
-        return server.isClosed();
+    public static final int SERVER_RUN = 1;
+    public static final int SERVER_STOP = 2;
+    
+    public static final int SOCKET_CONNECT = 1;
+    public static final int SOCKET_MESSAGE = 2;
+    public static final int SOCKET_DISCONNECT = 3;
+    public static final int SOCKET_ERROR = 4;
+    
+    public void onStateChange(int state){
     }
     
-    class Request extends HashMap<String, String>{
-        
-        boolean isWebSocket(){
-            if (containsKey("Upgrade")){
-                return "websocket".equalsIgnoreCase(get("Upgraded"));
-            }
-            return false;
-        }
-
-        public Request(InputStream in) throws Exception{
-            try( BufferedReader reader = new BufferedReader(new InputStreamReader(in, "utf-8"))
-                    ){
-                String line;
-                while((line=reader.readLine())!=null){
-                    System.out.println("'"+line+"'");
-                    String[] s  = line.split(":");
-                    if (s.length>1){
-                        put(s[0].trim(), s[1].trim());
-                    }
-                    if (!reader.ready()) break;
-                }                
-            }            
-        }
-        
+    public void onSocketEvent(int event,Socket socket){
+    }
+    
+    public void onSocketEvent(int event,Socket socket,String message){
     }
 
-    static final String BAD_REQUEST = "HTTP/1.1 200 OK\n";
-    
+    public abstract void onMassage(String message);
+
     class ClientHandler {
 
-        Request request;
         Socket socket;
         InputStream in;
         OutputStream out;
 
-        public ClientHandler(Socket socket) throws Exception {
-            this.socket = socket;
-            in = socket.getInputStream();
-            out = socket.getOutputStream();
-            
-            list.add(ClientHandler.this);
-            listen();
-            onClient(socket);
-            
+        public boolean isConnected() {
+            return socket != null && socket.isConnected();
         }
 
-        private void listen() {
-            new Thread(){
+        public boolean isClosed() {
+            return socket == null || socket.isClosed();
+        }
 
+        public ClientHandler(Socket socket) throws Exception {
+            this.socket = socket;
+            this.in = socket.getInputStream();
+            this.out = socket.getOutputStream();
+        }
+
+        public void send(String message) throws Exception {
+            out.write(message.getBytes(UTF8));
+            out.write(0);
+            out.flush();
+        }
+
+        void listen() {
+            Thread t = new Thread() {
                 @Override
                 public void run() {
                     try {
                         while (true) {
-                            try(ByteArrayOutputStream data = new ByteArrayOutputStream();){
-                                byte[] buf = new byte[1024];
-                                int n;
-                                while((n = in.read(buf))!=-1){
-                                    data.write(buf, 0, n);
-                                    if(buf[n-1] == 0) break;
+                            ByteArrayOutputStream data = new ByteArrayOutputStream();
+                            byte[] buf = new byte[1024];
+                            int n;
+                            while ((n = in.read(buf)) != 0) {
+                                data.write(buf, 0, n);
+                                if (buf[n - 1] == 0) {
+                                    break;
                                 }
-                                if (data.size() == 0) {
-                                    continue;
-                                }
-                                onClientMessage(socket, new String(data.toByteArray()));
                             }
+                            if (data.size() == 0) {
+                                continue;
+                            }
+                            String message = new String(data.toByteArray(), UTF8).trim();
+                            if (message.startsWith("by")) {
+                                close();
+                                remove(ClientHandler.this);
+//                                onClientBy(socket);
+                                onSocketEvent(SOCKET_DISCONNECT, socket);
+//                                onMessage(socket, "closed");
+                                break;
+                            }
+                            onSocketEvent(SOCKET_MESSAGE, socket, message);
                         }
-                    } catch (IOException e) {
-                        onClientError(socket, e.getMessage());
-                    }                    
+                    } catch (Exception e) {
+                        onSocketEvent(SOCKET_ERROR, socket, e.getMessage());
+//                        onSendError(socket, e.getMessage());
+                    }
                 }
-                
-            }.start();
+            };
+            t.start();
         }
 
-        public void close() {
-            try {
-                in.close();
-                out.close();
-                socket.close();
-            } catch (Exception e) {
-            }
+        public void close() throws Exception {
+            in.close();
+            out.close();
+            socket.close();
         }
-        
-        public void send(String message) throws Exception{
-            out.write(message.getBytes("utf-8"));
-            out.flush();
-        }
-        
+
         @Override
-        public String toString(){
-            return "handler "+socket.toString();
+        public String toString() {
+            return socket.toString() + " " + isConnected();
         }
     }
     
-    List<ClientHandler> list = new ArrayList<>();
+//    List<ClientHandler> list;
 
-    void removeSocket(Socket socket) {
-        for (Iterator<ClientHandler> it = list.iterator(); it.hasNext();) {
-            ClientHandler h = it.next();
-            if (h.socket.equals(socket)) {
-                h.close();
-                it.remove();
-            }
-        }
-    }
-    
-    int port;
-
-    public WebSocketServer(int port) {
-        this.port = port;
-    }
-        
-    public void onStart() {
-        System.out.print("server started");
-    }
-
-    public void onError(String message) {
-        System.out.println("client created");
-    }
-
-    public void onMessage(String message) {
-        System.out.println("MESSAGE : " + message);
-    }
-
-    public void onClient(Socket soket) {
-        System.out.println("client created");
-    }
-
-    public void onClientMessage(Socket socket, String message) {
-    }
-
-    public void onClientError(Socket soket, String message) {
-    }
-
-    
-    @Override
-    public void run() {
+    public void addHandler(Socket socket) {
         try {
-            
-            server = new ServerSocket(port);
-            onStart();
-            while (true) {
-                new ClientHandler(server.accept());
+            ClientHandler h = new ClientHandler(socket);
+            if (h.isConnected()) {
+                add(h);
+                h.listen();
+                onSocketEvent(SOCKET_CONNECT, socket);
             }
-            
         } catch (Exception e) {
-            
-            onError(e.getMessage());
         }
     }
 
-    Thread t;
+    public ClientHandler getHandler(Socket socket) {
+        for(Object p: this){
+            ClientHandler h = (ClientHandler)p;
+            if (h.socket.equals(socket)) {
+                return h;
+            }
+        }
+        return null;
+    }
     
-    public void start() {
-        t =  new Thread(this);
+    private Thread t;
+
+    public void start() throws Exception {
+        clear();
+        server = new ServerSocket(3345);
+        onStateChange(SERVER_RUN);
+        t = new Thread() {
+
+            @Override
+            public void interrupt() {
+                super.interrupt(); //To change body of generated methods, choose Tools | Templates.
+                System.out.println("interapted");
+            }
+            
+            @Override
+            public void run() {
+                try {
+                    while (!interrupted()) {
+                        addHandler(server.accept());
+                    }
+                    
+                } catch (IOException e) {
+                    System.err.println("server start error : " + e.getMessage());
+                    onStateChange(SERVER_STOP);
+                }
+            }
+        };
         t.start();
     }
-    
-    public void stop(){
+
+    public void stop() {
         try{
-            for(Iterator<ClientHandler> it = list.iterator();it.hasNext();){
-                ClientHandler h = it.next();
-                try{
-                    h.send("by");
-                    h.close();
-                } catch (Exception e){
-                    System.err.println("by error : "+e.getMessage());
-                } finally{
+            if (server != null) {
+                t.interrupt();
+                for (Iterator it = this.iterator(); it.hasNext();) {
+                    ClientHandler h = (ClientHandler)it.next();
+                    try {
+                        h.send("by");
+                        h.close();
+                    } catch (Exception e) {
+                    }
                     it.remove();
                 }
+                server.close();
+                server = null;
+                onStateChange(SERVER_STOP);
             }
-            server.close();
-        } catch (Exception e){
-            e.printStackTrace();
+        } catch(Exception e){
         }
-    }
-    
-    
-    public void list(){
-        for(ClientHandler h: list){
-            onMessage(h.toString());
-        }
-        if (list.isEmpty())
-            onMessage("list is empty");
-        else 
-            onMessage("--------------\ntotal client "+list.size());
     }
 
-    public void message(String message) throws Exception{
-        int count = 0;
-        byte[] msg = message.getBytes("utf-8");
-        for (ClientHandler h : list) {
+    public void sendToAll(String message) {
+        for (Object p: this) {
+            ClientHandler h = (ClientHandler)p;
             try {
-                h.out.write(msg);
-                h.out.write(0);
-                h.out.flush();
-                count++;
-            } catch (IOException e) {
-                onError(e.getMessage());
+                h.send(message);
+            } catch (Exception e) {
+                onSocketEvent(SOCKET_ERROR,h.socket, e.getMessage());
             }
         }
-        onMessage("message has be sebding to " + count + " client");
+    }
+
+    public void list() {
+        for (Object p : this) {
+            onMassage(p.toString());
+        }
     }
     
 }

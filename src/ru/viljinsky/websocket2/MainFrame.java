@@ -10,10 +10,6 @@ import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.net.Socket;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -22,113 +18,109 @@ import ru.viljinsky.server.CommandBar;
 import ru.viljinsky.server.MessagePane;
 import ru.viljinsky.server.StatusBar;
 
+
+
 /**
  *
  * @author viljinsky
  */
-public class MainFrame  extends JPanel{
+public class MainFrame extends JPanel{
     
-    public static final int port = 3345;
-    
-    public static final String host = "localhost";
-    
-    WebSocketServer srv = new WebSocketServer(port){
+    WebSocketServer server = new WebSocketServer() {
 
         @Override
-        public void onError(String message) {
-            textOut("ERROR :"+message+"\n");
-        }
-
-        @Override
-        public void onClient(Socket socket) {
-            textOut(socket+" : connected");
-        }
-
-        @Override
-        public void onStart() {
-            textOut("server started\n");
-        }
-
-        @Override
-        public void onMessage(String message) {
-            textOut(message+"\n");
-        }
-
-        @Override
-        public void onClientMessage(Socket socket, String message) {
-            if ("by".equals(message)){
-                removeSocket(socket);
+        public void onStateChange(int state) {
+            switch(state){
+                case SERVER_RUN:
+                    setStatusText("Сервер запущен");
+                    break;
+                case SERVER_STOP:
+                    setStatusText("Сервер остановлен");
+                    break;
             }
-            textOut(socket+" : "+message+"\n");
-        }                                
-        
-    };
-        
-    void json() throws Exception{
-        File file = new File("server_data.json");
-        if (file.exists()){
-            try(InputStream in = new FileInputStream(file); ByteArrayOutputStream out = new ByteArrayOutputStream();){
-                byte[] buf = new byte[1024];
-                int n;
-                while((n=in.read(buf))!=-1){
-                    out.write(buf, 0, n);
-                }                
-                srv.message(new String(out.toString()));
+        }
+
+        @Override
+        public void onSocketEvent(int event, Socket socket) {
+            onSocketEvent(event, socket,null); 
+        }
                 
+        @Override
+        public void onSocketEvent(int event, Socket socket,String message) {
+            switch(event){
+                
+                case SOCKET_CONNECT:
+                    textOut(socket.toString()+" connected");
+                    break;
+                    
+                case SOCKET_MESSAGE:
+                    textOut(socket.toString()+" \""+message+"\"");
+                    break;
+                    
+                case SOCKET_ERROR:
+                    textOut(socket.toString()+" ERROR :\""+message+"\"");
+                    break;
+                    
+                case SOCKET_DISCONNECT:
+                    textOut(socket.toString()+" disconnected");
+                    break;
             }
-            
         }
-    }
+        
+        
+        
+        @Override
+        public void onMassage(String message) {
+            textOut(message);
+        }
+
+    };
     
-    int message_count = 0;
-    int client_count = 0;
-    static final String START = "start";
-    static final String STOP = "stop";
-    static final String LIST = "list";
-    static final String MESSAGE = "message";
+    public static final String START = "start";
+    public static final String STOP = "stop";
+    public static final String MESSAGE = "message";
+    public static final String LIST = "list";
+    public static final String CLIENT = "client";
+    public static final String CLEAR = "clear";
+        
+    MessagePane messagePane = new MessagePane();
     
-    CommandBar commandBar = new CommandBar(START,STOP,LIST,null,MESSAGE, "client1",null,"client2","client3","json",null,"clear"){
+    StatusBar statusBar = new StatusBar();
+    
+    CommandBar commandBar = new CommandBar(START,STOP,null,LIST,MESSAGE,null,CLIENT,null,CLEAR){
 
         @Override
         public void doCommand(String command) {
             try{
                 switch(command){
-
-                    case START:
-                        srv.start();
-                        break;
-                        
-                    case STOP:
-                        srv.stop();
-                        break;
-
-                    case LIST:
-                        srv.list();
-                        break;
-                        
-                    case MESSAGE:
-                        srv.message("messsage"+(++message_count));
-                        break;
-                    
-                    case "clear":
+                    case CLEAR:
                         messagePane.clear();
                         break;
                         
-                    case "client2":
-                        new WebSocketFrame2().showInFrame("Клиент "+(++client_count));
+                    case START:
+                        server.start();
+                        break;
+                        
+                    case STOP:
+                        server.stop();
                         break;
                                                                         
-                    case "client1":
+                    case CLIENT:
                         new WebSocketFrame().showInFrame(getParent());
                         break;
                         
-                    case "client3":
-                        new WebSocketFrame3().showInFrame(getParent());
+                    case MESSAGE:
+                        server.sendToAll("hello gays");
                         break;
                         
-                    case "json":
-                        json();
+                    case LIST:
+                        server.list();
                         break;
+                        
+                    case "CMD1":
+                        statusBar.setText(command);
+                        textOut(command);
+                        throw new UnsupportedOperationException("unsupported yet");
                 }
             } catch(Exception e){
                 showMessage(e.getMessage());
@@ -137,44 +129,45 @@ public class MainFrame  extends JPanel{
         
     };
     
-    StatusBar statusBar = new StatusBar();
-    
-    MessagePane messagePane = new MessagePane();
-    
-    void showMessage(String message){
-        JOptionPane.showMessageDialog(getParent(), message);
-    }
-    
-    void textOut(String message){
-        messagePane.textOut(message+"\n");
-    }
-
-    public MainFrame() {
-        setLayout(new BorderLayout());
-        add(commandBar,BorderLayout.PAGE_START);
-        add(messagePane);
-        add(statusBar,BorderLayout.PAGE_END);
-    }
-    
     WindowListener adapter = new WindowAdapter() {
 
         @Override
         public void windowClosing(WindowEvent e) {
-            srv.stop();
+            server.stop();
+            System.out.println("window closing");
         }
         
     };
+                
+    void setStatusText(String str){
+        statusBar.setText(str);
+    }
     
-    public void showInFrame(){
-        JFrame frame = new JFrame("Server");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setContentPane(new MainFrame());
-        frame.setSize(800, 600);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        frame.addWindowListener(adapter);        
+    void textOut(String str){
+        messagePane.textOut(str+"\n");
+    }
+    
+    void showMessage(String str){
+        JOptionPane.showMessageDialog(getParent(), str);
     }
         
+    public MainFrame() {
+        setLayout(new BorderLayout());
+        add(messagePane);
+        add(statusBar,BorderLayout.PAGE_END);
+        add(commandBar,BorderLayout.PAGE_START);
+    }
+        
+    public void showInFrame(){
+        JFrame frame = new JFrame("WebSocket Server");
+        frame.setContentPane(this);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(800,600);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        frame.addWindowListener(adapter);
+    }
+    
     public static void main(String[] args){
         new MainFrame().showInFrame();
     }

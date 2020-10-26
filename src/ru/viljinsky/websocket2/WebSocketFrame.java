@@ -13,170 +13,130 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import ru.viljinsky.server.CommandBar;
 import ru.viljinsky.server.MessagePane;
+import ru.viljinsky.server.StatusBar;
 
 /**
  *
  * @author viljinsky
  */
-class WebSocketFrame extends JPanel {
+public class WebSocketFrame extends JPanel{
     
-    JFrame frame;
-    
-    WebSocketClient         client = new WebSocketClient("localhost", 3345){
-            
-            @Override
-            void onStopListen() {
-                client.close();
-                textOut("SERVER SEND BY");
-            }
-
-            @Override
-            void onListen() {
-                textOut("LISTEN...");
-            }
-
-            @Override
-            void onError(String message) {
-                textOut("ERROR   : " + message);
-            }
-
-            @Override
-            void onMessage(String message) {
-                textOut("MESSAGE : " + message);
-            }
-            
-        };
-
-    public void connect() {
-        if (client.isClosed()){
-            client.run();
-        }
-    }
-    
-    
-    Thread t;
-
-    public void waitServer() {
-        t = new Thread(){
-
-            @Override
-            public void run() {
-                try{
-                    while(!client.isConected()){
-                        client.run();
-                        join(1000);
-                        System.out.println("next");
-                    }
-                } catch(InterruptedException e){
-                    System.out.println("interapted");    
-                }
-                
-            }
-                                    
-        };
-        t.start();
-    }
-    
-    public void noWait(){
-        if (t!=null){
-            t.interrupt();
-            t = null;
-        }
-    }
-    
-    static final String CONNECT = "connect";
-    static final String BY = "by";
+    static final String START = "start";
     static final String MESSAGE = "message";
-    static final String WAIT = "wait";
-    static final String NOWAIT = "nowait";
-    CommandBar commandBar = new CommandBar(CONNECT,WAIT,NOWAIT,BY,null, MESSAGE, null,"clear") {
+    static final String MESSAGE_TO_ALL = "message to all";
+    static final String STOP = "stop";
+    static final String CLEAR = "clear";
+    
+    WebSocketClient client = new WebSocketClient("localhost",3345){
+
+        @Override
+        public void onMessage(String message) {
+            textOut(message);
+        }
+
+        @Override
+        public void onStateChange(int state) {
+            switch(state){
+                case CLOSED:
+                    statusText("Нет соединения");
+                    break;
+                case WAIT:
+                    statusText("Ожидание сервера...");
+                    break;
+                case READY:
+                    statusText("Слушаю...");
+                    break;                                        
+            }
+        }
+                        
+    };
+    
+    void textOut(String text){
+        messagePane.textOut(text+"\n");
+    }
+    
+    void statusText(String text){
+        statusBar.setText(text);
+    }
+    
+    void showMessage(String text){
+        JOptionPane.showMessageDialog(getParent(),text);
+    }
+    
+    StatusBar statusBar = new StatusBar();
+    
+    MessagePane messagePane = new MessagePane();
+    
+    CommandBar commandBar = new CommandBar(START,STOP,null,MESSAGE,MESSAGE_TO_ALL,null,CLEAR){
+
         @Override
         public void doCommand(String command) {
-            try {
-                switch (command) {
+            try{
+                switch(command){
                     
-                    case NOWAIT:
-                        t.interrupt();
-//                        noWait();
+                    case START:
+                        client.start();
                         break;
                         
-                    case WAIT:
-                        waitServer();
-                        break;
-                        
-                    case CONNECT:
-                        connect();
+                    case STOP:
+                        client.stop();
                         break;
                         
                     case MESSAGE:
-                        client.send("im lient");
-                        textOut("message to server Im client");
+                        if (client.isConected())
+                            client.send("message");
                         break;
                         
-                    case BY:
-                        client.send(BY);
-                        textOut("message to server by");
-                        client.close();
+                    case MESSAGE_TO_ALL:
+                        if (client.isConected()){
+                            client.send("all: hello evry body");
+                        }
                         break;
                         
-                    case "clear":
+                    case CLEAR: 
                         messagePane.clear();
                         break;
                 }
-                
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(getParent(), e.getMessage());
+            } catch (Exception e){
+                showMessage(e.getMessage());
             }
         }
+        
     };
-    MessagePane messagePane = new MessagePane();
+        
+    WindowAdapter adapter = new WindowAdapter() {
 
-    void textOut(String message) {
-        messagePane.textOut(message + "\n");
-    }
+        @Override
+        public void windowClosing(WindowEvent e) {
+            if (client!=null)
+                client.stop();
+        }
+        
+    };
 
-    public WebSocketFrame() {        
+    public WebSocketFrame() {
         setLayout(new BorderLayout());
-        add(commandBar, BorderLayout.PAGE_START);
         add(messagePane);
+        add(commandBar,BorderLayout.PAGE_START);
+        add(statusBar,BorderLayout.PAGE_END);
     }
-
-    public void showInFrame(Component parent) {
-        frame = new JFrame("Client");
-        frame.setAlwaysOnTop(true);
+    
+    public void showInFrame(Component parent){
+        JFrame frame = new JFrame("Client3");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setAlwaysOnTop(true);
         frame.setContentPane(this);
-        frame.setSize(300, 200);
+        frame.setSize(400, 200);
         frame.setLocationRelativeTo(parent);
         frame.setVisible(true);
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                t.interrupt();
-//                noWait();
-                if (client != null) {
-                    try {
-                        client.send("by");
-                        client.close();
-                        client.socket = null;
-                    } catch (Exception ex) {
-                    }
-                }
-            }
-        });
-        waitServer();
+        frame.addWindowListener(adapter);
     }
     
     public static void main(String[] args){
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                new WebSocketFrame().showInFrame(null);
-            }
-        });
+        new WebSocketFrame().showInFrame(null);
     }
+    
+    
 }
