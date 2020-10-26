@@ -159,7 +159,7 @@ class WebSocketFrame extends JPanel {
 //                noWait();
                 if (client != null) {
                     try {
-                        client.by();
+                        client.send("by");
                         client.close();
                         client.socket = null;
                     } catch (Exception ex) {

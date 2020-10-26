@@ -90,7 +90,10 @@ public class WebSocketClient implements Runnable {
                         continue;
                     }
                     String msg = new String(data.toByteArray(),"utf-8");
-                if ("by".equals(msg)) break;
+                if (msg.startsWith("by")){ 
+                    close();
+                    break;
+                }
                 onMessage(msg);
             }
         }
@@ -119,15 +122,15 @@ public class WebSocketClient implements Runnable {
         return socket!=null && socket.isConnected();
     }
     
-    public void by(){
-        try{
-            out.write("by".getBytes(UTF8));
-            out.write(0);
-            out.flush();
-        } catch (IOException e){
-            System.err.println(e.getMessage());
-        }
-        
-    }
+//    public void by(){
+//        try{
+//            out.write("by".getBytes(UTF8));
+//            out.write(0);
+//            out.flush();
+//        } catch (IOException e){
+//            System.err.println(e.getMessage());
+//        }
+//        
+//    }
     
 }

@@ -92,7 +92,7 @@ public class WebSocketFrame2 extends JPanel{
         public void windowClosing(WindowEvent e) {
             t.interrupt();
             try{
-                client.by();
+                client.send("by");
                 client.close();
                 client.socket = null;                                
             } catch(Exception ex){

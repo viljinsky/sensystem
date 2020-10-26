@@ -7,6 +7,7 @@
 package ru.viljinsky.websocket2;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -20,8 +21,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import ru.viljinsky.server.CommandBar;
 import ru.viljinsky.server.MessagePane;
 import ru.viljinsky.server.StatusBar;
@@ -129,6 +132,15 @@ abstract class WebSocketServer2{
         }
     }
     
+    public ClientHandler getHandler(Socket socket){
+        for(ClientHandler h: list){
+            if (h.socket.equals(socket)){
+                return h;
+            }
+        }
+        return null;
+    }
+    
     Thread t;
     
     public void start() throws Exception{
@@ -148,8 +160,7 @@ abstract class WebSocketServer2{
                     onStop();
                 }
             }
-        
-        
+                
         };
         t.start();
     }
@@ -227,6 +238,16 @@ public class MainFrame2 extends JPanel{
         @Override
         public void onMessage(Socket socket, String message) {
             textOut(socket.toString()+ " "+ message);
+            if (message.startsWith("all")){
+                for(ClientHandler h: list){
+                    if (!h.socket.equals(socket)){
+                        try{
+                            h.send(message);
+                        } catch (Exception e){
+                        }
+                    }
+                }
+            }
         }
 
         @Override
@@ -242,18 +263,22 @@ public class MainFrame2 extends JPanel{
     public static final String MESSAGE = "message";
     public static final String LIST = "list";
     public static final String CLIENT = "client";
+    public static final String CLEAR = "clear";
     
     
     MessagePane messagePane = new MessagePane();
     
     StatusBar statusBar = new StatusBar();
     
-    CommandBar commandBar = new CommandBar(START,STOP,null,LIST,MESSAGE,null,CLIENT){
+    CommandBar commandBar = new CommandBar(START,STOP,null,LIST,MESSAGE,null,CLIENT,null,CLEAR){
 
         @Override
         public void doCommand(String command) {
             try{
                 switch(command){
+                    case CLEAR:
+                        messagePane.clear();
+                        break;
                     case START:
                         server.start();
                         break;
@@ -307,12 +332,17 @@ public class MainFrame2 extends JPanel{
     void showMessage(String str){
         JOptionPane.showMessageDialog(getParent(), str);
     }
-
+    
+    
+    JList clients = new JList();
+    
     public MainFrame2() {
         setLayout(new BorderLayout());
         add(messagePane);
         add(statusBar,BorderLayout.PAGE_END);
         add(commandBar,BorderLayout.PAGE_START);
+        clients.setPreferredSize(new Dimension(200,100));
+        add(new JScrollPane(clients),BorderLayout.WEST);
                 
     }
         

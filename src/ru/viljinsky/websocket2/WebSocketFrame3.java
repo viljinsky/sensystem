@@ -25,6 +25,7 @@ public class WebSocketFrame3 extends JPanel{
     
     static final String WAIT = "wait";
     static final String MESSAGE = "message";
+    static final String MESSAGE_TO_ALL = "message to all";
     static final String BY = "by";
     static final String CLEAR = "clear";
     
@@ -66,7 +67,7 @@ public class WebSocketFrame3 extends JPanel{
     
     StatusBar statusBar = new StatusBar();
     MessagePane messagePane = new MessagePane();
-    CommandBar commandBar = new CommandBar(WAIT,MESSAGE,BY,CLEAR){
+    CommandBar commandBar = new CommandBar(WAIT,MESSAGE,MESSAGE_TO_ALL,BY,CLEAR){
 
         @Override
         public void doCommand(String command) {
@@ -79,10 +80,15 @@ public class WebSocketFrame3 extends JPanel{
                         if (client.isConected())
                             client.send("message");
                         break;
+                    case MESSAGE_TO_ALL:
+                        if (client.isConected()){
+                            client.send("all: hello evry body");
+                        }
+                        break;
                     case BY:
                         t.interrupt();
                         if (client.isConected()){
-                            client.by();
+                            client.send("by");
                             client.close();
                         }
                         break;
@@ -127,10 +133,13 @@ public class WebSocketFrame3 extends JPanel{
 
         @Override
         public void windowClosing(WindowEvent e) {
-            t.interrupt();
-            if (client.isConected()){
-                client.by();
-                client.close();
+            try{
+                t.interrupt();
+                if (client.isConected()){
+                    client.send("by");
+                    client.close();
+                }
+            } catch(Exception ex){
             }
         }
         
