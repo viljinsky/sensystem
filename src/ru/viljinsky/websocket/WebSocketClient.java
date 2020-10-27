@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package ru.viljinsky.websocket2;
+package ru.viljinsky.websocket;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,11 +35,11 @@ public class WebSocketClient{
     
     static final String UTF8 = "utf-8";
     static final String REQUEST = 
-            "GET /chat HTTP/1.1\n" +
+            "GET / HTTP/1.1\n" +
             "Host: %s\n" +
             "Upgrade: websocket\n" +
             "Connection: Upgrade\n" +
-            "Origin: http://javascript.ru\n" +
+            "Origin: http://timetabler.ru\n" +
             "Sec-WebSocket-Key: %s\n" +
             "Sec-WebSocket-Version: 13\n";
 
@@ -55,6 +55,7 @@ public class WebSocketClient{
     Thread t ;
     
     public void start(){
+        if(t!=null) return;
         t = new Thread(){
 
             @Override
@@ -66,16 +67,15 @@ public class WebSocketClient{
                         socket = new Socket(host, port);
                         in = socket.getInputStream();
                         out = socket.getOutputStream();
-                        out.write(String.format(REQUEST,host,randomUUID()).getBytes(UTF8));
-                        out.write(0);
-                        out.flush();
+                        send(String.format(REQUEST,host,randomUUID()));
                         listen();
                         join(1000);
                     } catch (InterruptedException e){
                         System.out.println("no connection");
                         onStateChange(CLOSED);
                         break;
-                    } catch (IOException e){
+                    } catch (Exception e){
+                        socket = null;
                     }
                 }
             }
@@ -97,6 +97,8 @@ public class WebSocketClient{
                 }   
             }
         } catch (Exception e){
+        } finally{
+            t = null;
         }
     }
 

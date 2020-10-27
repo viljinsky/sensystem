@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package ru.viljinsky.websocket2;
+package ru.viljinsky.websocket;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,9 +19,13 @@ import java.util.Iterator;
  *
  * @author viljinsky
  */
-abstract class WebSocketServer extends ArrayList {
+public abstract class WebSocketServer extends ArrayList {
     static final String UTF8 = "utf-8";
     ServerSocket server;
+    
+    public boolean isClosed(){
+        return server==null || server.isClosed();
+    }
     
     public static final int SERVER_RUN = 1;
     public static final int SERVER_STOP = 2;
@@ -31,14 +35,9 @@ abstract class WebSocketServer extends ArrayList {
     public static final int SOCKET_DISCONNECT = 3;
     public static final int SOCKET_ERROR = 4;
     
-    public void onStateChange(int state){
-    }
-    
-    public void onSocketEvent(int event,Socket socket){
-    }
-    
-    public void onSocketEvent(int event,Socket socket,String message){
-    }
+    public abstract void onStateChange(int state);
+        
+    public abstract void onSocketEvent(int event,Socket socket,String message);
 
     public abstract void onMassage(String message);
 
@@ -91,7 +90,7 @@ abstract class WebSocketServer extends ArrayList {
                                 close();
                                 remove(ClientHandler.this);
 //                                onClientBy(socket);
-                                onSocketEvent(SOCKET_DISCONNECT, socket);
+                                onSocketEvent(SOCKET_DISCONNECT, socket,null);
 //                                onMessage(socket, "closed");
                                 break;
                             }
@@ -118,21 +117,19 @@ abstract class WebSocketServer extends ArrayList {
         }
     }
     
-//    List<ClientHandler> list;
-
     public void addHandler(Socket socket) {
         try {
             ClientHandler h = new ClientHandler(socket);
             if (h.isConnected()) {
                 add(h);
                 h.listen();
-                onSocketEvent(SOCKET_CONNECT, socket);
+                onSocketEvent(SOCKET_CONNECT, socket,null);
             }
         } catch (Exception e) {
         }
     }
 
-    public ClientHandler getHandler(Socket socket) {
+    ClientHandler getHandler(Socket socket) {
         for(Object p: this){
             ClientHandler h = (ClientHandler)p;
             if (h.socket.equals(socket)) {
@@ -189,11 +186,20 @@ abstract class WebSocketServer extends ArrayList {
                 server = null;
                 onStateChange(SERVER_STOP);
             }
-        } catch(Exception e){
+        } catch(IOException e){
         }
     }
 
     public void sendToAll(String message) {
+        if(server==null){
+            onMassage("ERROR сервер не запущен");
+            return;
+        }
+        if (size()==0){
+            onMassage("ERROR Нет слушателей");
+            return;
+        }
+        onMassage("Оправка сообщения...");
         for (Object p: this) {
             ClientHandler h = (ClientHandler)p;
             try {
@@ -202,6 +208,7 @@ abstract class WebSocketServer extends ArrayList {
                 onSocketEvent(SOCKET_ERROR,h.socket, e.getMessage());
             }
         }
+        onMassage("Сообщение успешно отпрвалено ("+size()+"слушателей)");
     }
 
     public void list() {

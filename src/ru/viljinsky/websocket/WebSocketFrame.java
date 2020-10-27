@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package ru.viljinsky.websocket2;
+package ru.viljinsky.websocket;
 
 import java.awt.BorderLayout;
 import java.awt.Component;

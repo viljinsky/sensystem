@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package ru.viljinsky.websocket2;
+package ru.viljinsky.websocket;
 
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
@@ -40,10 +40,10 @@ public class MainFrame extends JPanel{
             }
         }
 
-        @Override
-        public void onSocketEvent(int event, Socket socket) {
-            onSocketEvent(event, socket,null); 
-        }
+//        @Override
+//        public void onSocketEvent(int event, Socket socket) {
+//            onSocketEvent(event, socket,null); 
+//        }
                 
         @Override
         public void onSocketEvent(int event, Socket socket,String message) {
