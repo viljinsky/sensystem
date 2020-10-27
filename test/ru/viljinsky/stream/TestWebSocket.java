@@ -7,28 +7,16 @@
 package ru.viljinsky.stream;
 
 import ru.viljinsky.websocket.WebSocketPanel;
-import java.awt.BorderLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.Dimension;
 import java.net.Socket;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.SwingUtilities;
-import ru.viljinsky.server.CommandBar;
-import ru.viljinsky.server.MessagePane;
-import ru.viljinsky.server.StatusBar;
 import ru.viljinsky.websocket.WebSocketClient;
 import ru.viljinsky.websocket.WebSocketServer;
 
 class TestClient2 extends WebSocketPanel{
 
-    @Override
-    public void onClosing() {
-        if (client!=null) client.stop();
-    }
-            
     private class Client extends WebSocketClient{
 
         public Client(String host, int port) {
@@ -52,18 +40,31 @@ class TestClient2 extends WebSocketPanel{
         }
 
         @Override
-        public void onMessage(String message) {
-            textOut(message+"\n");
+        public void onSocketEvent(int event, String message) {
+            switch(event){
+                case SOCKET_SEND_DATA:
+                    textOut("send : "+message);
+                    break;
+                case SOCKET_READ_DATA:
+                    textOut("read :"+message);
+                    break;
+                            
+            }
         }
         
     }
         
     WebSocketClient client;
+    
+    @Override
+    public void onClosing() {
+        if (client!=null) client.stop();
+    }
 
-    public TestClient2() {
-        super();
+    @Override
+    public void onOpen() {
         client = new Client("localhost",3345);    
-        setCommand("open","close",null,"message");
+        client.start();
     }
 
     @Override
@@ -71,7 +72,7 @@ class TestClient2 extends WebSocketPanel{
         switch(command){
             case "open":return client.isClosed();
             case "close": return client.isConected();
-            case "message": return client.isClosed();
+            case "message": return client.isConected();
             default: return true;
         }
     }
@@ -80,6 +81,9 @@ class TestClient2 extends WebSocketPanel{
     public void doCommand(String command) {
         try{
             switch(command){
+                case "master":
+                    client.send("master");
+                    break;
                 case "open":
                     client.start();
                     break;
@@ -87,7 +91,8 @@ class TestClient2 extends WebSocketPanel{
                     client.stop();
                     break;
                 case "message":
-                    client.send("OK");
+                    if (client.isConected())
+                        client.send("OK");
                     break;
             }
         } catch(Exception e){
@@ -95,13 +100,19 @@ class TestClient2 extends WebSocketPanel{
         }
     }
         
+    public TestClient2() {
+        super();
+        setTitle("Client");
+        setCommand("open","close",null,"message","master");
+    }
+
 }
 
 /**
  *
  * @author viljinsky
  */
-public class TestWebSocket extends JPanel{
+public class TestWebSocket extends WebSocketPanel{
     
     WebSocketServer server = new WebSocketServer() {
 
@@ -114,13 +125,13 @@ public class TestWebSocket extends JPanel{
         public void onStateChange(int state) {
             switch (state){
                 case SERVER_RUN:
-                    setStatusText("server start");
+                    setStatus("server start");
                     break;
                 case SERVER_STOP:
-                    setStatusText("server stop");
+                    setStatus("server stop");
                     break;
             }
-            commandBar.updateActions();
+            updateActions();
         }
 
         @Override
@@ -133,37 +144,56 @@ public class TestWebSocket extends JPanel{
                     textOut(socket + " disconnect");
                     break;
                 case SOCKET_MESSAGE:
-                    textOut(socket+" "+message);
+                    
+//                    Map header = (HashMap)getHeaders(socket);
+                    
+                    if ("master".equals(message)){
+                        setHeaderValue(socket, "master", "yes");
+                    } else {
+                        if (hasHeaderValue(socket,"master")){
+                            for(Socket s: socketList()){
+                                if(!s.equals(socket)){
+                                    send(s, message);
+                                }
+                            }
+                        }
+                    }
+                    
+                    textOut(socket+" \""+message+"\"");
                     break;
             }
         }
         
     };
-    
-    
-    MessagePane messagePane = new MessagePane();
-    CommandBar commandBar = new CommandBar("start","stop","message",null,"test","main"){
 
+    @Override
+    public void onClosing() {
+        server.stop();
+    }
         @Override
         public void doCommand(String command) {
             try{
                 switch(command){
-//                    case "main":
-//                        new MainClient().showInFrame(getParent());
-//                        break;
+                    case "list":
+                        server.list();
+                        break;
                     case "start":
                         server.start();
                         break;
+                        
                     case "stop":
                         server.stop();
                         break;
+                        
                     case "message":
                         server.sendToAll("hello gay");
                         break;
+                        
                     case "test":
                         new TestClient2().showInFrame(getParent());
                         break;
                 }
+                
             } catch(Exception e){
                 showMessage(e.getMessage());
             }
@@ -181,51 +211,20 @@ public class TestWebSocket extends JPanel{
             return true;
         }
                         
-    };
-    
-    void showMessage(String message){
-        JOptionPane.showMessageDialog(getParent(), message);
-    }
-    void setStatusText(String message){
-        statusBar.setText(message);
-    }
-    
-    void textOut(String message){
-        messagePane.textOut(message+"\n");
-    }
-    
-    StatusBar statusBar = new StatusBar();
 
     public TestWebSocket() {
-        setLayout(new BorderLayout());
-        add(messagePane);
-        add(commandBar,BorderLayout.PAGE_START);
-        add(statusBar,BorderLayout.PAGE_END);
-        commandBar.updateActions();       
+        super();
+        setPreferredSize(new Dimension(800,600));
+        setTitle("Server");
+        setCommand("start","stop","message",null,"test","main","list");
+        updateActions();
     }
     
-    WindowListener adapter = new WindowAdapter() {
-
-        @Override
-        public void windowClosing(WindowEvent e) {
-            server.stop();
-        }
-        
-    };
-    public void showInFrame(){
-        JFrame frame = new JFrame("server");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setContentPane(this);
-        frame.setSize(800, 600);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        frame.addWindowListener(adapter);
-    }
     
     public static void main(String[] args){
         
         SwingUtilities.invokeLater(() -> {
-            new TestWebSocket().showInFrame();
+            new TestWebSocket().showInFrame(null);
         });
         
     }

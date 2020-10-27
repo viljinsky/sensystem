@@ -13,7 +13,10 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -41,12 +44,24 @@ public abstract class WebSocketServer extends ArrayList {
 
     public abstract void onMassage(String message);
 
+    
     class ClientHandler {
 
         Socket socket;
         InputStream in;
         OutputStream out;
-
+        Map<String,Object> headers = new HashMap<>();
+        
+        void readHeader(String message){
+            String[] ss = message.split("\n");
+            for(String s:ss){
+                String[] p  = s.split(":");
+                if (p.length>1){
+                    headers.put(p[0].trim(), p[1].trim());
+                }
+            }
+        }
+        
         public boolean isConnected() {
             return socket != null && socket.isConnected();
         }
@@ -59,6 +74,7 @@ public abstract class WebSocketServer extends ArrayList {
             this.socket = socket;
             this.in = socket.getInputStream();
             this.out = socket.getOutputStream();
+            
         }
 
         public void send(String message) throws Exception {
@@ -89,16 +105,17 @@ public abstract class WebSocketServer extends ArrayList {
                             if (message.startsWith("by")) {
                                 close();
                                 remove(ClientHandler.this);
-//                                onClientBy(socket);
                                 onSocketEvent(SOCKET_DISCONNECT, socket,null);
-//                                onMessage(socket, "closed");
                                 break;
                             }
-                            onSocketEvent(SOCKET_MESSAGE, socket, message);
+                            if (message.startsWith("GET")){
+                                readHeader(message);
+                            } else {
+                                onSocketEvent(SOCKET_MESSAGE, socket, message);
+                            }
                         }
                     } catch (Exception e) {
                         onSocketEvent(SOCKET_ERROR, socket, e.getMessage());
-//                        onSendError(socket, e.getMessage());
                     }
                 }
             };
@@ -129,7 +146,7 @@ public abstract class WebSocketServer extends ArrayList {
         }
     }
 
-    ClientHandler getHandler(Socket socket) {
+    protected ClientHandler getHandler(Socket socket) {
         for(Object p: this){
             ClientHandler h = (ClientHandler)p;
             if (h.socket.equals(socket)) {
@@ -190,6 +207,69 @@ public abstract class WebSocketServer extends ArrayList {
         }
     }
 
+    //-------------------------------------------------------------------------
+    
+    public boolean hasHeaderValue(Socket socket,String key){
+        for(int i=0;i<size();i++){
+            ClientHandler h = (ClientHandler)get(i);
+            if (h.socket.equals(socket) && h.headers.containsKey(key)){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public Object getHeaderValue(Socket socket,String key){
+        for(int i=0;i<size();i++){
+            ClientHandler h = (ClientHandler)get(i);
+            if(h.socket.equals(socket) && h.headers.containsKey(key)){
+                return h.headers.get(key);
+            }
+        }
+        return null;
+    }
+    
+    public void setHeaderValue(Socket socket,String key,Object value){
+        for(int i=0;i<size();i++){
+            ClientHandler h = (ClientHandler)get(i);
+            if(h.socket.equals(socket) ){
+                h.headers.put(key, value);
+            }
+        }
+    }
+    
+    public Object getHeaders(Socket socket){
+        for(Object p: this){
+            ClientHandler h = (ClientHandler)p;
+            if (h.socket.equals(socket)){
+                return h.headers;
+            }
+        }
+        return null;
+    }
+    
+    public List<Socket> socketList(){
+        List<Socket> list = new ArrayList<>();
+        for(Object p: this){
+            ClientHandler h = (ClientHandler)p;
+            list.add(h.socket);
+        }
+        return list;
+    }
+    
+    public void send(Socket socket,String message){
+        for(Object p: this){
+            ClientHandler h = (ClientHandler)p;
+            if (h.socket.equals(socket)){
+                try{
+                    h.send(message);
+                } catch(Exception e){
+                    onSocketEvent(SOCKET_ERROR,h.socket, e.getMessage());
+                }
+            }
+        }
+    }
+    
     public void sendToAll(String message) {
         if(server==null){
             onMassage("ERROR сервер не запущен");

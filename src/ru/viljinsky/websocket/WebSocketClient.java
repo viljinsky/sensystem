@@ -24,7 +24,13 @@ public class WebSocketClient{
     public static final int READY = 2;
     public static final int SERVER_DISCONNECT = 3;
     
+    public static final int SOCKET_READ_DATA = 1;
+    public static final int SOCKET_SEND_DATA = 2;
+    
     public void onMessage(String message){
+    }
+    
+    public void onSocketEvent(int event,String message){
     }
     
     public void onStateChange(int state){
@@ -106,6 +112,7 @@ public class WebSocketClient{
         out.write(message.getBytes(UTF8));
         out.write(0);
         out.flush();
+        onSocketEvent(SOCKET_SEND_DATA, message);
         System.out.println("send message");
     }
 
@@ -131,6 +138,7 @@ public class WebSocketClient{
                     }
                     System.out.println("message");
                     onMessage(message);
+                    onSocketEvent(SOCKET_READ_DATA, message);
                 }
             }
         } catch (IOException e) {

@@ -36,7 +36,7 @@ public class WebSocketPanel extends JPanel {
 
         @Override
         public boolean isEnabled(String command) {
-            return WebSocketPanel.this.isEnabled();
+            return WebSocketPanel.this.isEnabled(command);
         }
     };
 
@@ -56,7 +56,7 @@ public class WebSocketPanel extends JPanel {
     }
 
     public void textOut(String message) {
-        messagePane.textOut(message);
+        messagePane.textOut(message+"\n");
     }
 
     public void setStatus(String message) {
@@ -67,9 +67,19 @@ public class WebSocketPanel extends JPanel {
         public void windowClosing(WindowEvent e) {
             onClosing();
         }
+
+        @Override
+        public void windowOpened(WindowEvent e) {
+            onOpen();
+        }
+        
+        
     };
 
     public void onClosing() {
+    }
+    
+    public void onOpen(){
     }
     
     public void setCommand(String... commands){
@@ -84,15 +94,47 @@ public class WebSocketPanel extends JPanel {
         add(statusBar, BorderLayout.PAGE_END);
     }
 
+    JFrame frame;
+    String title = "WebSocketPanel";
+    public void setTitle(String title){
+        this.title = title;
+        if (frame!=null){
+            frame.setTitle(title);
+        }
+    }
     public void showInFrame(Component parent) {
-        JFrame frame = new JFrame("Client");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame = new JFrame(title);
         frame.setContentPane(this);
-        frame.setAlwaysOnTop(true);
+        if(parent == null){
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        } else {
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setAlwaysOnTop(true);
+        }
         frame.pack();
         frame.setLocationRelativeTo(parent);
         frame.setVisible(true);
         frame.addWindowListener(adapter);
     }
-    
+ 
+    public static void main(String[] args){
+        WebSocketPanel panel = new WebSocketPanel(){
+
+            @Override
+            public void doCommand(String command) {
+                System.out.println(command);
+                updateActions();
+            }
+
+            @Override
+            public boolean isEnabled(String command) {
+                System.out.println(command);
+                return super.isEnabled(command); //To change body of generated methods, choose Tools | Templates.
+            }
+            
+            
+            
+        };
+        panel.showInFrame(null);
+    }
 }
