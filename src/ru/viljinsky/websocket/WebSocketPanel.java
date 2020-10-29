@@ -9,6 +9,7 @@ package ru.viljinsky.websocket;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Image;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -102,8 +103,17 @@ public class WebSocketPanel extends JPanel {
             frame.setTitle(title);
         }
     }
+    
+    Image image = null;
+    public void setIcon(Image image){
+        this.image = image;
+        if(frame!=null){
+            frame.setIconImage(image);
+        }
+    }
     public void showInFrame(Component parent) {
         frame = new JFrame(title);
+        frame.setIconImage(image);
         frame.setContentPane(this);
         if(parent == null){
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

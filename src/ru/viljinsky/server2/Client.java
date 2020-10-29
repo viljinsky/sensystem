@@ -7,22 +7,87 @@
 package ru.viljinsky.server2;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import ru.viljinsky.server.DB_JSON_decoder;
 import ru.viljinsky.server.IDB;
 import ru.viljinsky.server.ScheduleView;
-import ru.viljinsky.server.StatusBar;
 import ru.viljinsky.server.ViewControl;
 import ru.viljinsky.websocket.WebSocketClient;
+
+
+class ClientStatusBar extends JPanel{
+    
+    JLabel label = new JLabel("statusbar");
+    List<Action> actions = new ArrayList<>();
+    
+    private JButton createButtom(String name){
+        Action a = new AbstractAction(name) {
+            
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doCommand(e.getActionCommand());
+            }
+        };
+        actions.add(a);
+        return new JButton(a);
+                
+    }
+
+    public ClientStatusBar() {
+        setBorder(new EmptyBorder(12,6,12,6));
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        add(label);
+        add(Box.createHorizontalGlue());
+        add(createButtom("start"));
+        add(createButtom("stop"));
+        add(createButtom("reload"));
+    }
+    
+    public void setText(String text){
+        label.setText(text);
+    }
+    
+    public void doCommand(String command){
+        System.out.println(command);
+    }
+    
+    public void updateButtons(int state){
+        for(Action a: actions){
+            switch ((String)a.getValue(Action.ACTION_COMMAND_KEY)){
+                case "start":
+                    a.setEnabled(state == WebSocketClient.CLOSED);
+                    break;
+                case "stop":
+                    a.setEnabled(state == WebSocketClient.READY);
+                    break;
+                case "reload":
+                    a.setEnabled(state == WebSocketClient.READY);
+                    break;
+            }
+        }
+    }
+    
+}
 
 /**
  *
@@ -30,8 +95,52 @@ import ru.viljinsky.websocket.WebSocketClient;
  */
 public class Client extends JPanel{
     
+    int port = 7035;
+    String host="localhost";
+    
     ScheduleView view = new ScheduleView();
-    StatusBar statusBar = new StatusBar();
+    
+    ClientStatusBar statusBar = new ClientStatusBar(){
+
+        @Override
+        public void doCommand(String command) {
+            try{
+            switch (command){
+                case "start":
+                    start();
+                    break;
+                case "stop":
+                    stop();
+                    break;
+                case "reload":
+                    reload();
+                    break;
+                    
+            }
+            } catch(Exception e){
+                showMessage(e.getMessage());
+            }
+        }
+        
+    };
+    
+    void start() throws Exception{
+        if (client==null){
+            client = new ScheduleClient(host, port);
+            client.start();
+        }
+    }
+    void stop() throws Exception{
+        if (client!=null){
+            client.stop();
+            client=null;
+        }
+    }
+    void reload() throws Exception{
+        if (client!=null && client.isConected()){
+            client.send("hello");
+        }
+    }
     
     void showMessage(String message){
         JOptionPane.showMessageDialog(getParent(), message);
@@ -49,7 +158,7 @@ public class Client extends JPanel{
                 case READY:
                     statusBar.setText("Соединение установлено.");
                     try{
-         //               client.send("giveme");
+                        client.send("hello");
                     } catch(Exception e){
                         showMessage(e.getMessage());
                     }
@@ -106,18 +215,23 @@ public class Client extends JPanel{
         add(statusBar,BorderLayout.PAGE_END);
     }
     
+    
     WindowListener adapter = new WindowAdapter() {
 
         @Override
         public void windowClosing(WindowEvent e) {
-            if (client!=null && client.isConected()){
-                client.close();
+            try{
+            if (client!=null){ // && client.isConected()){
+                client.stop();
+                client=null;
+            }
+            } catch(Exception s){
             }
         }
 
         @Override
         public void windowOpened(WindowEvent e) {
-            client = new ScheduleClient("localhost", 3345);
+            client = new ScheduleClient(host, port);
             client.start();
         }
         
@@ -125,10 +239,8 @@ public class Client extends JPanel{
     
     public void showInFrame(Component parent){  
         JFrame frame = new JFrame("Client");
-        if (parent==null)
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        else
-            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setIconImage(Master.createImage(Color.yellow));
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
         frame.setContentPane(this);
         frame.setSize(800, 600);

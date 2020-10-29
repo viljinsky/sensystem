@@ -54,7 +54,22 @@ public class MainFrame extends JPanel{
                     break;
                     
                 case SOCKET_MESSAGE:
-                    textOut(socket.toString()+" \""+message+"\"");
+                    if("hello".equals(message)){
+                        send(socket, "hello "+socket.toString());
+                    } else if ("master".equals(message)){
+                        setHeaderValue(socket, "master", null);
+                    } else {
+                        if (hasHeaderValue(socket, "master")){
+                            for(Socket s:socketList()){
+                                if (!s.equals(socket)){
+                                    send(s, message);
+                                }
+                            }
+                        } else {
+                            textOut(socket.toString()+" \""+message+"\"");
+                        }
+                    }
+//                    textOut(socket.toString()+" \""+message+"\"");
                     break;
                     
                 case SOCKET_ERROR:
@@ -106,11 +121,14 @@ public class MainFrame extends JPanel{
                         break;
                                                                         
                     case CLIENT:
-                        new WebSocketFrame().showInFrame(getParent());
+                        new ClientFrame().showInFrame(getParent());
                         break;
                         
                     case MESSAGE:
-                        server.sendToAll("hello gays");
+                        for(Socket s: server.socketList()){
+                            server.send(s, "hello gays");
+                        }
+//                        server.sendToAll("hello gays");
                         break;
                         
                     case LIST:

@@ -60,6 +60,12 @@ public class WebSocketClient{
 
     Thread t ;
     
+    public void open() throws Exception{
+        socket = new Socket(host, port);
+        in = socket.getInputStream();
+        out=socket.getOutputStream();
+    }
+    
     public void start(){
         if(t!=null) return;
         t = new Thread(){
@@ -108,19 +114,24 @@ public class WebSocketClient{
         }
     }
 
-    public void send(String message) throws Exception{
-        out.write(message.getBytes(UTF8));
+    public void send(String... message) throws Exception{
+        if(message.length>0){
+        for(String s: message){
+            out.write(s.getBytes(UTF8));
+            out.write(0x0d);
+        }
         out.write(0);
         out.flush();
-        onSocketEvent(SOCKET_SEND_DATA, message);
+        onSocketEvent(SOCKET_SEND_DATA, message[0]);
         System.out.println("send message");
+        }
     }
 
     void listen() {
         try {
+            onStateChange(READY);
             while (isConected()) {
                 System.out.println("listen.");
-                onStateChange(READY);
                 try(ByteArrayOutputStream data = new ByteArrayOutputStream();){
                     byte[] buf = new byte[1024];
                     int n;

@@ -23,9 +23,19 @@ import java.util.Map;
  * @author viljinsky
  */
 public abstract class WebSocketServer extends ArrayList {
+
+    int port = 3345;
+    
     static final String UTF8 = "utf-8";
     ServerSocket server;
-    
+
+    public WebSocketServer() {
+    }
+
+    public WebSocketServer(int port) {
+        this.port = port;
+    }
+            
     public boolean isClosed(){
         return server==null || server.isClosed();
     }
@@ -88,6 +98,7 @@ public abstract class WebSocketServer extends ArrayList {
                 @Override
                 public void run() {
                     try {
+                        loop:
                         while (true) {
                             ByteArrayOutputStream data = new ByteArrayOutputStream();
                             byte[] buf = new byte[1024];
@@ -102,16 +113,19 @@ public abstract class WebSocketServer extends ArrayList {
                                 continue;
                             }
                             String message = new String(data.toByteArray(), UTF8).trim();
-                            if (message.startsWith("by")) {
-                                close();
-                                remove(ClientHandler.this);
-                                onSocketEvent(SOCKET_DISCONNECT, socket,null);
-                                break;
-                            }
-                            if (message.startsWith("GET")){
-                                readHeader(message);
-                            } else {
-                                onSocketEvent(SOCKET_MESSAGE, socket, message);
+                            for(String s : message.split("\r")){
+                                if("by".equals(s)){
+                                    close();
+                                    remove(ClientHandler.this);
+                                    onSocketEvent(SOCKET_DISCONNECT, socket,null);
+                                    break loop;
+                                }
+                                if(s.startsWith("GET")){
+                                    readHeader(message);
+                                } else {
+                                    onSocketEvent(SOCKET_MESSAGE, socket, s);
+                                }
+                                
                             }
                         }
                     } catch (Exception e) {
@@ -158,9 +172,10 @@ public abstract class WebSocketServer extends ArrayList {
     
     private Thread t;
 
+    
     public void start() throws Exception {
         clear();
-        server = new ServerSocket(3345);
+        server = new ServerSocket(port);
         onStateChange(SERVER_RUN);
         t = new Thread() {
 
@@ -270,27 +285,6 @@ public abstract class WebSocketServer extends ArrayList {
         }
     }
     
-    public void sendToAll(String message) {
-        if(server==null){
-            onMassage("ERROR сервер не запущен");
-            return;
-        }
-        if (size()==0){
-            onMassage("ERROR Нет слушателей");
-            return;
-        }
-        onMassage("Оправка сообщения...");
-        for (Object p: this) {
-            ClientHandler h = (ClientHandler)p;
-            try {
-                h.send(message);
-            } catch (Exception e) {
-                onSocketEvent(SOCKET_ERROR,h.socket, e.getMessage());
-            }
-        }
-        onMassage("Сообщение успешно отпрвалено ("+size()+"слушателей)");
-    }
-
     public void list() {
         for (Object p : this) {
             onMassage(p.toString());
