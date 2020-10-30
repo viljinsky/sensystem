@@ -49,6 +49,14 @@ public class WebSocketClient{
             "Sec-WebSocket-Key: %s\n" +
             "Sec-WebSocket-Version: 13\n";
 
+    public String getOrigine(){
+        if(socket!=null){
+            return socket.getLocalAddress().toString();
+        }
+        return null;
+    };
+    
+    
     public WebSocketClient(String host, int port) {
         this.host = host;
         this.port = port;

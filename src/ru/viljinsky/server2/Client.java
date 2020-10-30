@@ -96,7 +96,7 @@ class ClientStatusBar extends JPanel{
 public class Client extends JPanel{
     
     int port = 7035;
-    String host="localhost";
+    String host="127.0.0.1";
     
     ScheduleView view = new ScheduleView();
     
@@ -157,6 +157,7 @@ public class Client extends JPanel{
             switch(state){
                 case READY:
                     statusBar.setText("Соединение установлено.");
+                    
                     try{
                         client.send("hello");
                     } catch(Exception e){
@@ -166,10 +167,12 @@ public class Client extends JPanel{
                     
                 case WAIT:
                     statusBar.setText("Ожидание соединения...");
+                    setTitle("client ["+host+"]");
                     break;
                     
                 case CLOSED:
                     statusBar.setText("Соединение разорвано.");
+                    setTitle("client");
                     break;
             }
         }
@@ -237,8 +240,17 @@ public class Client extends JPanel{
         
     };
     
+    String title = "client";
+    public void setTitle(String title){
+        this.title = title;
+        if(frame!=null){
+            frame.setTitle(title);
+        }
+    }
+    
+    JFrame frame;
     public void showInFrame(Component parent){  
-        JFrame frame = new JFrame("Client");
+        frame = new JFrame("Client");
         frame.setIconImage(Master.createImage(Color.yellow));
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
