@@ -116,7 +116,12 @@ class Model2 extends AbstractViewModel{
 
     @Override
     public void init() throws Exception {
-        Recordset depart = view.depart;
+        Recordset depart;
+        if (view.departFilter == null)
+            depart = view.depart;
+        else
+            depart = view.depart.join(view.departFilter, DEPART_ID);
+        
         view.setDimension(0, 0);
         for (int col=0;col<view.day_list.size();col++){
             view.addColumn(new ValuesHeader((String)view.day_list.get(col)[1],view.day_list.getValues(col).getValues(DAY_ID)));
@@ -188,9 +193,14 @@ class Model2 extends AbstractViewModel{
 class Model1 extends AbstractViewModel {
 
     @Override
-    public void init(){
+    public void init()throws Exception{
         view.setDimension(0, 0);
-        Recordset depart = view.depart;
+        Recordset depart;
+        if (view.departFilter==null){
+            depart = view.depart;
+        } else {
+            depart =  view.depart.join(view.departFilter, DEPART_ID);
+        }
         for(int i = 0;i<view.day_list.size();i++){
             view.addRow(new ValuesHeader((String)view.day_list.get(i)[1],view.day_list.getValues(i).getValues(DAY_ID)));
             for (int j=0;j<view.bell_list.size();j++){
@@ -266,7 +276,12 @@ class Model3 extends AbstractViewModel{
 
     @Override
     public void init() throws Exception {
-        Recordset depart = view.depart;
+        Recordset depart;
+        if (view.departFilter == null){
+            depart = view.depart;
+        } else {
+            depart=view.depart.join(view.departFilter,DEPART_ID);
+        }
         ValuesHeader vh;
         view.setDimension(0, 0);
         for(Iterator<Values> it=view.day_list.getIterator();it.hasNext();){
@@ -338,7 +353,12 @@ class Model4 extends AbstractViewModel{
     @Override
     public void init() throws Exception {
         view.setDimension(0, 0);
-        for(Iterator<Values> it=view.teacher.getIterator();it.hasNext();){
+        
+        Recordset r = view.teacher;
+        if (view.teacherFilter!=null){
+            r = r.join(view.teacherFilter,TEACHER_ID);
+        }
+        for(Iterator<Values> it=r.getIterator();it.hasNext();){
             Values values = it.next();
             ValuesHeader vh = new ValuesHeader(values.getString(LAST_NAME), values.getValues(TEACHER_ID));
             view.addColumn(vh);
@@ -428,6 +448,11 @@ class Model5 extends AbstractViewModel{
     @Override
     public void init() throws Exception {
         view.setDimension(0, 0);
+        Recordset r = view.teacher;
+        if (view.teacherFilter!=null){
+            r = r.join(view.teacherFilter,TEACHER_ID);
+        }
+        
         for(Iterator<Values> it = view.day_list.getIterator();it.hasNext();){
             Values values = it.next();
             ValuesHeader vh = new ValuesHeader(values.getString(DAY_NAME), values.getValues(DAY_ID));
@@ -441,7 +466,8 @@ class Model5 extends AbstractViewModel{
             for(int col=0;col<view.columnCount();col++){
                 view.cell(col, row).background = Color.CYAN;
             }
-            for(Iterator<Values> it = view.teacher.getIterator();it.hasNext();){
+            
+            for(Iterator<Values> it = /*view.teacher.getIterator()*/r.getIterator();it.hasNext();){
                 Values values = it.next();
                 values.put(BELL_ID, values1.get(BELL_ID));
                 vh = new ValuesHeader(values.getString(LAST_NAME), values.getValues(BELL_ID,TEACHER_ID));
@@ -455,6 +481,16 @@ class Model5 extends AbstractViewModel{
     @Override
     public void setDate(Date date) throws Exception {
         view.clearItems();
+        
+        Calendar c = Calendar.getInstance();
+        for(int col=0;col<view.columnCount();col++){
+            ValuesHeader vh = (ValuesHeader)view.getColumnHeader(col);
+            c.setTime(date);
+            c.add(Calendar.DAY_OF_MONTH, vh.values.getInteger(DAY_ID)-1);
+            vh.caption = SIMPLE_DATE_FORMAT1.format(c.getTime());
+        }
+        
+        
         for(Iterator<Values> it = getScheculeRecordset(date).getIterator();it.hasNext();){
             Values values = it.next();
             Cell cell = findCell(values);

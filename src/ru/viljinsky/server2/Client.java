@@ -29,6 +29,8 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import ru.viljinsky.server.DB_JSON_decoder;
+import ru.viljinsky.server.DateControl;
+import ru.viljinsky.server.FilterPanel;
 import ru.viljinsky.server.IDB;
 import ru.viljinsky.server.ScheduleView;
 import ru.viljinsky.server.ViewControl;
@@ -214,8 +216,25 @@ public class Client extends JPanel{
         setLayout(new BorderLayout());
         add(new JScrollPane(view));
         ViewControl control = new ViewControl(view);
-        add(control,BorderLayout.PAGE_START);
-        add(statusBar,BorderLayout.PAGE_END);
+        JPanel panel2 = new JPanel();
+        panel2.setLayout(new BoxLayout(panel2, BoxLayout.Y_AXIS));
+        panel2.add(control);
+        panel2.add(new FilterPanel(view));
+        add(panel2,BorderLayout.PAGE_START);
+        
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(new DateControl(){
+
+            @Override
+            public void change() {
+                view.setDate(getDate());
+            }
+            
+        });
+        panel.add(statusBar);
+        
+        add(panel,BorderLayout.PAGE_END);
     }
     
     

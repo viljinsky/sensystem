@@ -8,7 +8,6 @@ package ru.viljinsky.server;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
@@ -21,6 +20,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 import ru.viljinsky.cells7.Cell;
@@ -68,13 +68,16 @@ public class ScheduleView extends View implements IDataModel{
     
     Date date_begin,date_end,date = new Date();;
     
+    Recordset teacherFilter;
+    Recordset departFilter;
+    
     Recordset day_list,bell_list,depart,room,subject,group_label,schedule,changes,building,teacher,skill,curriculum,profile;
     
     Values attributes;
        
     ScheduleTitle title = new ScheduleTitle();
     
-    ViewModel model;
+    public ViewModel model;
     
     StatusBar statusBar = new StatusBar();
 
@@ -288,12 +291,28 @@ public class ScheduleView extends View implements IDataModel{
         JFrame frame = new JFrame();        
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(new JScrollPane(view));
-        frame.add(viewControl,BorderLayout.PAGE_START);
+        
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(viewControl);
+        panel.add(new FilterPanel(view));
+        
+        frame.add(panel,BorderLayout.PAGE_START);
                 
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
         
-        IDB db = new DB_JSON_decoder(new File(MyServer.SERVER_DATA));
+        frame.add(new DateControl(){
+
+            @Override
+            public void change() {
+                view.setDate(getDate());
+            }
+            
+        },BorderLayout.PAGE_END);
+        
+//        IDB db = new DB_JSON_decoder(new File(MyServer.SERVER_DATA));
+        IDB db = new DB_JSON_decoder(new File("timetabler.json"));
         view.open(db);
         view.setDate(new Date());
         
