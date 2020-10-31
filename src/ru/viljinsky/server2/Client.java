@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.EtchedBorder;
 import ru.viljinsky.server.DB_JSON_decoder;
 import ru.viljinsky.server.DateControl;
 import ru.viljinsky.server.FilterPanel;
@@ -218,12 +219,14 @@ public class Client extends JPanel{
         ViewControl control = new ViewControl(view);
         JPanel panel2 = new JPanel();
         panel2.setLayout(new BoxLayout(panel2, BoxLayout.Y_AXIS));
+        panel2.setBorder(new EtchedBorder());
         panel2.add(control);
         panel2.add(new FilterPanel(view));
         add(panel2,BorderLayout.PAGE_START);
         
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(new EtchedBorder());
         panel.add(new DateControl(){
 
             @Override

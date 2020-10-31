@@ -218,6 +218,7 @@ class Model1 extends AbstractViewModel {
     @Override
     public void setDate(Date date) throws Exception{
         Calendar c = Calendar.getInstance();
+        if (view==null) return ;
         // Закголовки строк
         for(int row=0;row<view.rowCount();row++){
             ValuesHeader vh = (ValuesHeader)view.getRowHeader(row);

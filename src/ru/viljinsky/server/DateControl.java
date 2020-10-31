@@ -102,7 +102,7 @@ public class DateControl extends JPanel{
         this(new Date());
     }
     
-    Date date;
+    Date date = new Date();
     SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     SimpleDateFormat SIMPLE_DATE_FORMAT2 = new SimpleDateFormat("dd MMM");
     SimpleDateFormat SIMPLE_DATE_FORMAT3 = new SimpleDateFormat("dd MMM yyyy");

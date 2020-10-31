@@ -18,6 +18,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import ru.viljinsky.project2019.IDataModel;
@@ -87,10 +88,13 @@ abstract class FilterContent extends JPanel implements IDataModel{
     static final String APPLY = "apply";
     static final String CLERA = "clear";
     static final String SELECT_ALL = "select_all";
+    String description = "Отметьте элементы, которые будут отображениы в сетке";
     
     ItemPanel itemPanel ;
     
     ScheduleView view;
+    JLabel label = new JLabel();
+    String caption = "Фильтры";
     
     public abstract ItemPanel createInnerPanel();
     public abstract void applyFilter() throws Exception;
@@ -100,7 +104,13 @@ abstract class FilterContent extends JPanel implements IDataModel{
         setLayout(new BorderLayout());        
         itemPanel = createInnerPanel();
         add(new JScrollPane(itemPanel));
-        add(commandBar,BorderLayout.PAGE_END);                                
+        add(commandBar,BorderLayout.PAGE_END);       
+        add(label,BorderLayout.PAGE_START);
+    }
+    
+    public void setDescription(String string){
+        description = string;
+        label.setText(description);
     }
     
     CommandBar commandBar = new CommandBar(APPLY,CLERA,SELECT_ALL){
@@ -111,19 +121,12 @@ abstract class FilterContent extends JPanel implements IDataModel{
                 switch(command){
                     case APPLY:
                         applyFilter();
-//                        itemPanel.getSelectedValues().print();
-//                        Recordset r = itemPanel.getSelectedValues();
-//                        if (!r.isEmpty())
-//                            view.teacherFilter = r;
-//                        else
-//                            view.teacherFilter = null;
-//                        view.model.init();
-//                        view.setDate(view.getDate());
                         break;
 
                     case CLERA:
                         itemPanel.clearSelected();
                         break;
+                        
                     case SELECT_ALL:
                         itemPanel.selectAll();
                         break;
@@ -135,9 +138,12 @@ abstract class FilterContent extends JPanel implements IDataModel{
 
     };
     
-                
+        
+    JDialog dialog;
     public void showModal(Component parent){
-        JDialog dialog = new JDialog();
+        
+        dialog = new JDialog();
+        dialog.setTitle(caption);
         dialog.setModal(true);
         dialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
         dialog.setAlwaysOnTop(true);
@@ -150,7 +156,7 @@ abstract class FilterContent extends JPanel implements IDataModel{
         
 }
 
-class InnerPanel extends FilterContent{
+class TeacherFilter extends FilterContent{
 
     @Override
     public ItemPanel createInnerPanel() {
@@ -178,18 +184,16 @@ class InnerPanel extends FilterContent{
         view.setDate(view.getDate());
         
     }
-    
-    
-
-    public InnerPanel(ScheduleView view) {
+        
+    public TeacherFilter(ScheduleView view) {
         super(view);
     }
 
 }
 
-class InnerPanel2 extends FilterContent{
+class DepartFilter extends FilterContent{
 
-    public InnerPanel2(ScheduleView view) {
+    public DepartFilter(ScheduleView view) {
         super(view);
     }
 
@@ -230,10 +234,10 @@ public class FilterPanel extends JPanel implements IDataModel{
     
     ScheduleView view;
         
-    static final String FILTER1 = "filter1";
-    static final String FILTER2 = "filter2";
-    static final String FILTER3 = "filter3";
-    static final String FILTER4 = "filter4";
+    static final String FILTER1 = "Классы";
+    static final String FILTER2 = "Преподаватели";
+//    static final String FILTER3 = "filter3";
+//    static final String FILTER4 = "filter4";
     
     private JButton createButton(String command){
         Action a = new AbstractAction(command) {
@@ -250,11 +254,11 @@ public class FilterPanel extends JPanel implements IDataModel{
         switch(command){
             case FILTER1:
                 
-                new InnerPanel(view).showModal(getRootPane());
+                new DepartFilter(view).showModal(getRootPane());
                 break;
                 
             case FILTER2:
-                new InnerPanel2(view).showModal(getRootPane());
+                new TeacherFilter(view).showModal(getRootPane());
                 break;
         }
     }
@@ -264,8 +268,8 @@ public class FilterPanel extends JPanel implements IDataModel{
         setLayout(new FlowLayout(FlowLayout.LEFT));
         add(createButton(FILTER1));
         add(createButton(FILTER2));
-        add(createButton(FILTER3));
-        add(createButton(FILTER4));
+//        add(createButton(FILTER3));
+//        add(createButton(FILTER4));
         
     }
     
