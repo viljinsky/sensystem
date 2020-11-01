@@ -187,8 +187,8 @@ public class MyServer extends JPanel implements IDataModel{
         add(calendarView,BorderLayout.WEST);
         add(new JScrollPane(view));      
         add(view.statusBar,BorderLayout.PAGE_END);
-        add(view.title,BorderLayout.PAGE_START);
-        view.title.add(new ViewControl(view));
+//        add(view.title,BorderLayout.PAGE_START);
+//        view.title.add(new ViewControl(view));
     }
     
     public void showInFrame(){

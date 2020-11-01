@@ -15,8 +15,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
-import java.io.OutputStream;
-import java.net.Socket;
 import javax.swing.Action;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -33,15 +31,16 @@ import ru.viljinsky.server.DB_JSON_encoder;
 import ru.viljinsky.server.StatusBar;
 import ru.viljinsky.websocket.WebSocketClient;
 
+
+
 /**
  *
  * @author viljinsky
  */
 public class Master extends JPanel{
-    
-    String host = "localhost";
-    int port = 7035;
-    
+        
+    ClientConnection cc = new ClientConnection();
+            
     public void send(String message) throws Exception{
         
         new Thread(){
@@ -50,7 +49,7 @@ public class Master extends JPanel{
             public void run() {
                 statusBar.setText("Отправка...");
                 try{
-                    WebSocketClient client = new WebSocketClient(host,port);
+                    WebSocketClient client = new WebSocketClient(cc.host,cc.port);
                     client.open();
                     client.send("master",message,"by");
                     client.close();
@@ -75,6 +74,7 @@ public class Master extends JPanel{
     public static final String EXIT = "exit";
     
     String result = "";
+    
     String getMessage() throws Exception{
         Proc.query(con->{
             JSONObject obj = new DB_JSON_encoder(con);
@@ -92,7 +92,8 @@ public class Master extends JPanel{
                     case EXIT:
                         System.exit(0);
                     case SEND:
-                        send(getMessage());
+                        if (cc.config(getParent()))
+                            send(getMessage());
                         break;
                 }
             } catch(Exception e){

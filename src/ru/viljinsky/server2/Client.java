@@ -9,25 +9,16 @@ package ru.viljinsky.server2;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import ru.viljinsky.server.DB_JSON_decoder;
 import ru.viljinsky.server.DateControl;
@@ -38,59 +29,6 @@ import ru.viljinsky.server.ViewControl;
 import ru.viljinsky.websocket.WebSocketClient;
 
 
-class ClientStatusBar extends JPanel{
-    
-    JLabel label = new JLabel("statusbar");
-    List<Action> actions = new ArrayList<>();
-    
-    private JButton createButtom(String name){
-        Action a = new AbstractAction(name) {
-            
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                doCommand(e.getActionCommand());
-            }
-        };
-        actions.add(a);
-        return new JButton(a);
-                
-    }
-
-    public ClientStatusBar() {
-        setBorder(new EmptyBorder(12,6,12,6));
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        add(label);
-        add(Box.createHorizontalGlue());
-        add(createButtom("start"));
-        add(createButtom("stop"));
-        add(createButtom("reload"));
-    }
-    
-    public void setText(String text){
-        label.setText(text);
-    }
-    
-    public void doCommand(String command){
-        System.out.println(command);
-    }
-    
-    public void updateButtons(int state){
-        for(Action a: actions){
-            switch ((String)a.getValue(Action.ACTION_COMMAND_KEY)){
-                case "start":
-                    a.setEnabled(state == WebSocketClient.CLOSED);
-                    break;
-                case "stop":
-                    a.setEnabled(state == WebSocketClient.READY);
-                    break;
-                case "reload":
-                    a.setEnabled(state == WebSocketClient.READY);
-                    break;
-            }
-        }
-    }
-    
-}
 
 /**
  *
@@ -98,17 +36,19 @@ class ClientStatusBar extends JPanel{
  */
 public class Client extends JPanel{
     
-    int port = 7035;
-    String host="127.0.0.1";
+    ClientConnection cc = new ClientConnection();
     
     ScheduleView view = new ScheduleView();
     
     ClientStatusBar statusBar = new ClientStatusBar(){
-
+        
         @Override
         public void doCommand(String command) {
             try{
             switch (command){
+                case "config":
+                    cc.config(getParent());
+                    break;
                 case "start":
                     start();
                     break;
@@ -127,9 +67,22 @@ public class Client extends JPanel{
         
     };
     
+//    void config() throws Exception{
+//        ValuesPanel valuesPanel = new ValuesPanel();
+//        valuesPanel.setFields(new ValuesField[]{
+//            new ValuesFieldString("host"),
+//            new ValuesFieldInteger("port")
+//        });
+//        valuesPanel.setValues(getConnection());
+//        if (valuesPanel.showModal(getParent())){
+//            setConnection(valuesPanel.getValues());
+//        }
+//      
+//    }
+    
     void start() throws Exception{
         if (client==null){
-            client = new ScheduleClient(host, port);
+            client = new ScheduleClient(cc.host, cc.port);
             client.start();
         }
     }
@@ -170,7 +123,7 @@ public class Client extends JPanel{
                     
                 case WAIT:
                     statusBar.setText("Ожидание соединения...");
-                    setTitle("client ["+host+"]");
+                    setTitle("client ["+cc.host+"]");
                     break;
                     
                 case CLOSED:
@@ -213,20 +166,25 @@ public class Client extends JPanel{
     
     ScheduleClient client; 
     
+    static class FrameHeader extends JPanel{
+
+        public FrameHeader() {
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            setBorder(new EtchedBorder());
+        }
+        
+    }
+    
     public Client() {
         setLayout(new BorderLayout());
         add(new JScrollPane(view));
         ViewControl control = new ViewControl(view);
-        JPanel panel2 = new JPanel();
-        panel2.setLayout(new BoxLayout(panel2, BoxLayout.Y_AXIS));
-        panel2.setBorder(new EtchedBorder());
+        JPanel panel2 = new FrameHeader();
         panel2.add(control);
         panel2.add(new FilterPanel(view));
         add(panel2,BorderLayout.PAGE_START);
         
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(new EtchedBorder());
+        JPanel panel = new FrameHeader();
         panel.add(new DateControl(){
 
             @Override
@@ -256,7 +214,7 @@ public class Client extends JPanel{
 
         @Override
         public void windowOpened(WindowEvent e) {
-            client = new ScheduleClient(host, port);
+            client = new ScheduleClient(cc.host, cc.port);
             client.start();
         }
         

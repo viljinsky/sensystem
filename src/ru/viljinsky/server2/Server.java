@@ -17,13 +17,20 @@ import javax.swing.SwingUtilities;
 import ru.viljinsky.websocket.WebSocketServer;
 
 
+
+
 /**
  *
  * @author viljinsky
  */
 public class Server extends WebSocketPanel{
     
-    int port = 7035;
+    ServerConnection sc = new ServerConnection();
+    
+    public static final String START = "start";
+    public static final String STOP = "stop";
+    public static final String CONFIG = "config";
+    
     
     String fileName = "timetabler.json";
     
@@ -54,7 +61,7 @@ public class Server extends WebSocketPanel{
         return null;
     }
     
-    WebSocketServer server = new WebSocketServer(port) {
+    WebSocketServer server = new WebSocketServer(sc.port) {
 
         @Override
         public void onMassage(String message) {
@@ -65,9 +72,11 @@ public class Server extends WebSocketPanel{
         public void onStateChange(int state) {
             switch (state){
                 case SERVER_RUN:
+                    setTitle("server"+sc.port);
                     setStatus("Сервер работает");
                     break;
                 case SERVER_STOP:
+                    setTitle("server");
                     setStatus("Сервер остановлен");
                     break;
             }
@@ -147,12 +156,19 @@ public class Server extends WebSocketPanel{
                     server.list();
                     break;
 
-                case "start":
+                case START:
                     server.start();
                     break;
 
-                case "stop":
+                case STOP:
                     server.stop();
+                    break;
+                    
+                case CONFIG:
+                    if (sc.config(getParent())){
+                        server.stop();
+                        server.setPort(sc.port);
+                    };
                     break;
 
                 case "client":
@@ -172,9 +188,9 @@ public class Server extends WebSocketPanel{
     @Override
     public boolean isEnabled(String command) {
         switch(command){
-            case "start":
+            case START:
                 return server.isClosed();
-            case "stop":
+            case STOP:
                 return !server.isClosed();
         }
         return true;
@@ -185,7 +201,7 @@ public class Server extends WebSocketPanel{
         super();
         setPreferredSize(new Dimension(800,300));
         setTitle("Server");
-        setCommand("start","stop","message",null,"client","master","list","send");
+        setCommand(START,STOP,CONFIG,null,"message",null,"client","master","list","send");
         updateActions();
         setIcon(Master.createImage(Color.PINK));
     }

@@ -35,6 +35,10 @@ public abstract class WebSocketServer extends ArrayList {
     public WebSocketServer(int port) {
         this.port = port;
     }
+    
+    public void setPort(int port){
+        this.port = port;
+    }
             
     public boolean isClosed(){
         return server==null || server.isClosed();

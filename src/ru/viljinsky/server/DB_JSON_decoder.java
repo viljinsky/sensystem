@@ -232,6 +232,11 @@ public class DB_JSON_decoder implements IDB{
     public Recordset profile() throws Exception {
         return getRecordset(PROFILE);
     }
+
+    @Override
+    public Recordset subject_group() throws Exception {
+        return getRecordset(SUBJECT_GROUP);
+    }
     
     
     

@@ -36,6 +36,7 @@ public interface IDB{
     public static final String SKILL = "skill";
     public static final String CURRICULUM = "curiculum"; 
     public static final String PROFILE = "profile";
+    public static final String SUBJECT_GROUP = "subject_group";
     
     public Recordset day_list() throws Exception;
     public Recordset bell_list() throws Exception;
@@ -51,5 +52,6 @@ public interface IDB{
     public Recordset skill() throws Exception;
     public Recordset curiculum() throws Exception;
     public Recordset profile() throws Exception;
+    public Recordset subject_group() throws Exception;
        
 } 

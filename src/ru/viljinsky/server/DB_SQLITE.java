@@ -92,6 +92,12 @@ public class DB_SQLITE implements IDB,IDataModel{
     public Recordset profile() throws Exception {
         return db.profile();
     }
+
+    @Override
+    public Recordset subject_group() throws Exception {
+        return db.subject_group();
+    }
+    
     
     
 }

@@ -50,6 +50,7 @@ public class DB_JSON_encoder extends JSONObject implements IDataModel {
         recordsetToJSON(IDB.SKILL,db.skill());
         recordsetToJSON(IDB.CURRICULUM, db.curriculum());
         recordsetToJSON(IDB.PROFILE, db.profile());
+        recordsetToJSON(IDB.SUBJECT_GROUP, db.subject_group());
         
         put(IDB.META, meta);
         

@@ -7,6 +7,7 @@
 package ru.viljinsky.server;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -21,6 +22,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.border.EmptyBorder;
+import ru.viljinsky.project2019.BaseDialog;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
@@ -80,6 +83,14 @@ class ItemPanel extends JPanel{
         }
         return result;
     }
+    
+    void setSelectedValues(Recordset recordset){
+        if (recordset == null) return;
+        for(int i=0;i<getComponentCount();i++){
+            FilterItem item = (FilterItem)getComponent(i);
+            item.setSelected((!recordset.filter(item.values.getValues(fieldName)).isEmpty()));
+        }
+    }
 
 }
 
@@ -93,8 +104,8 @@ abstract class FilterContent extends JPanel implements IDataModel{
     ItemPanel itemPanel ;
     
     ScheduleView view;
-    JLabel label = new JLabel();
     String caption = "Фильтры";
+    JLabel label = new JLabel(description);
     
     public abstract ItemPanel createInnerPanel();
     public abstract void applyFilter() throws Exception;
@@ -105,7 +116,9 @@ abstract class FilterContent extends JPanel implements IDataModel{
         itemPanel = createInnerPanel();
         add(new JScrollPane(itemPanel));
         add(commandBar,BorderLayout.PAGE_END);       
+        label.setBorder(new EmptyBorder(12,6,12,6));
         add(label,BorderLayout.PAGE_START);
+        setBorder(new EmptyBorder(12,6,12,6));
     }
     
     public void setDescription(String string){
@@ -142,12 +155,14 @@ abstract class FilterContent extends JPanel implements IDataModel{
     JDialog dialog;
     public void showModal(Component parent){
         
-        dialog = new JDialog();
+        dialog = new BaseDialog();
         dialog.setTitle(caption);
         dialog.setModal(true);
         dialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
         dialog.setAlwaysOnTop(true);
-        dialog.setContentPane(this);
+       
+//        dialog.setContentPane(this);
+        dialog.add(this);
         dialog.setSize(500, 400);
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
@@ -169,6 +184,7 @@ class TeacherFilter extends FilterContent{
             }
 
         };
+        p.setSelectedValues(view.teacherFilter);
         return p;
     }
 
@@ -176,9 +192,11 @@ class TeacherFilter extends FilterContent{
     public void applyFilter() throws Exception{
         itemPanel.getSelectedValues().print();
         Recordset r = itemPanel.getSelectedValues();
-        if (!r.isEmpty())
+        if (!r.isEmpty()){
             view.teacherFilter = r;
-        else
+            Recordset t = view.subject_group.select(TEACHER_ID,DEPART_ID).join(r, TEACHER_ID).count(DEPART_ID);
+            view.departFilter = t.select(DEPART_ID);
+        } else
             view.teacherFilter = null;
         view.model.init();
         view.setDate(view.getDate());
@@ -195,6 +213,7 @@ class DepartFilter extends FilterContent{
 
     public DepartFilter(ScheduleView view) {
         super(view);
+        
     }
 
     @Override
@@ -207,6 +226,7 @@ class DepartFilter extends FilterContent{
             }
             
         };
+        p.setSelectedValues(view.departFilter);
         return p;
     }
 
@@ -214,10 +234,15 @@ class DepartFilter extends FilterContent{
     public void applyFilter() throws Exception {
         itemPanel.getSelectedValues().print();
         Recordset r = itemPanel.getSelectedValues();
-        if (!r.isEmpty())
+        if (!r.isEmpty()){
             view.departFilter = r;
-        else
+            Recordset t = view.subject_group.select(TEACHER_ID,DEPART_ID).join(r,DEPART_ID).select(TEACHER_ID).count(TEACHER_ID);
+//            t.print();
+            view.teacherFilter = t.select(TEACHER_ID);
+        }    
+        else {
             view.departFilter = null;
+        }
         view.model.init();
         view.setDate(view.getDate());
     }
