@@ -111,6 +111,7 @@ public class Master extends JPanel{
         add(replacementTab);
         add(statusBar,BorderLayout.PAGE_END);
         replacementTab.setVisible(false);
+        cc.read();
     }
     
     WindowListener adapter = new WindowAdapter() {
@@ -144,6 +145,7 @@ public class Master extends JPanel{
     
     public void onClosed(){
         replacementTab.setVisible(false);
+        cc.save();
     }
     
     JMenu getMenu1(){

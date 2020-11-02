@@ -127,6 +127,7 @@ public class Server extends WebSocketPanel{
 
     @Override
     public void onClosing() {
+        sc.save();
         server.stop();
     }
 
@@ -204,6 +205,7 @@ public class Server extends WebSocketPanel{
         setCommand(START,STOP,CONFIG,null,"message",null,"client","master","list","send");
         updateActions();
         setIcon(Master.createImage(Color.PINK));
+        sc.read();
     }
 
     

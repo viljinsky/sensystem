@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import ru.viljinsky.project2019.Values;
 
 /**
  *
@@ -35,6 +36,11 @@ public class DateControl extends JPanel{
     
     String first_date = "2020-09-01";
     String last_date = "2020-10-25";
+    
+    public void setPeriod(String first_date,String last_date){
+        this.first_date = first_date;
+        this.last_date = last_date;
+    }
     
     private JButton createButton(String command){
         Action a = new AbstractAction(command) {
@@ -106,6 +112,7 @@ public class DateControl extends JPanel{
     SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     SimpleDateFormat SIMPLE_DATE_FORMAT2 = new SimpleDateFormat("dd MMM");
     SimpleDateFormat SIMPLE_DATE_FORMAT3 = new SimpleDateFormat("dd MMM yyyy");
+    
     
     public void setDate(Date date){
         try{           

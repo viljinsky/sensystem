@@ -48,4 +48,28 @@ class ClientConnection {
         return false;
     }
     
+    String fileName = "connection.ini";    
+    public void read(){
+        
+        IniFile2 iniFile2 = new IniFile2();
+        iniFile2.read();
+        Values v = iniFile2.getValues("web_client");
+        if (v.isEmpty()){
+            v.put(PORT, 7035);
+            v.put(HOST, "localhost");
+        } else {
+            v.put(PORT, Integer.valueOf(v.getString(PORT)));
+        }
+        setConnection(v);
+    }
+    
+    public void save(){
+        
+        IniFile2 iniFile2 = new IniFile2();
+        iniFile2.read();
+        iniFile2.setValues("web_client", getConnecteion());
+        iniFile2.save();
+                        
+    }
+    
 }

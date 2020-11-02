@@ -17,8 +17,10 @@ import java.util.Calendar;
 import java.util.Date;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import ru.viljinsky.cells7.Cell;
 import ru.viljinsky.cells7.Item;
 import ru.viljinsky.cells7.View;
@@ -241,6 +243,7 @@ public class ScheduleView extends View implements IDataModel{
         date_begin = new SimpleDateFormat("yyyy-MM-dd").parse(attributes.getString(DATE_BEGIN));
         date_end = new SimpleDateFormat("yyyy-MM-dd").parse(attributes.getString(DATE_END));
         subject_group = db.subject_group();
+        
                 
         
         model.init();
@@ -250,42 +253,52 @@ public class ScheduleView extends View implements IDataModel{
         periodChange();
     }
     
-    static ScheduleView view;
-            
-    public static void main(String[] args)throws Exception{
-               
-        view = new ScheduleView();
-        ViewControl viewControl = new ViewControl(view);
-        JFrame frame = new JFrame();        
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new JScrollPane(view));
+//    static ScheduleView view;
+    
+    public void showInFrame(){
         
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.add(viewControl);
-        panel.add(new FilterPanel(view));
-        
-        frame.add(panel,BorderLayout.PAGE_START);
-                
-        frame.setSize(800, 600);
-        frame.setLocationRelativeTo(null);
-        
-        frame.add(new DateControl(){
+        ViewControl viewControl = new ViewControl(this);
+        DateControl dateControl = new DateControl(){
 
             @Override
             public void change() {
-                view.setDate(getDate());
+                ScheduleView.this.setDate(getDate());
             }
             
-        },BorderLayout.PAGE_END);
+        };
+        FilterPanel filterPanel = new FilterPanel(this);
         
-//        IDB db = new DB_JSON_decoder(new File(MyServer.SERVER_DATA));
-        IDB db = new DB_JSON_decoder(new File("timetabler.json"));
-        view.open(db);
-        view.setDate(new Date());
+        JFrame frame = new JFrame();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        frame.setVisible(true);
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel,BoxLayout.Y_AXIS));
+        panel.add(viewControl);
+        panel.add(filterPanel);
+        panel.add(dateControl);
         
+        frame.add(panel,BorderLayout.PAGE_START);
+        frame.add(new JScrollPane(this));
+        frame.setSize(800,600);
+        frame.setLocationRelativeTo(null);
+        
+        try{
+            IDB db = new DB_JSON_decoder(new File("timetabler.json"));
+            open(db);
+            setDate(new Date());        
+            dateControl.setPeriod(attributes.getString(DATE_BEGIN), attributes.getString(DATE_END));            
+        } catch (Exception e){
+            JOptionPane.showMessageDialog(frame, e.getMessage());
+        }
+        
+        frame.setVisible(true);        
+    }
+            
+    public static void main(String[] args)throws Exception{
+        SwingUtilities.invokeLater(() -> {
+            new ScheduleView().showInFrame();
+        });
+               
     }
     
 }

@@ -16,6 +16,7 @@ import ru.viljinsky.project2019.values.ValuesPanel;
  * @author viljinsky
  */
 class ServerConnection {
+    
     int port = 7035;
     static final String PORT = "port";
 
@@ -38,6 +39,25 @@ class ServerConnection {
             return true;
         }
         return false;
+    }
+    
+    public void read(){
+        IniFile2 iniFile2 = new IniFile2();
+        iniFile2.read();
+        Values v = iniFile2.getValues("web_server");
+        if (!v.isEmpty()){
+            v.put(PORT, Integer.valueOf(v.getString(PORT)));
+        } else {
+            v.put(PORT, 7035);
+        }
+        setConnection(v);                    
+    }
+    
+    public void save(){
+        IniFile2 iniFile2 = new IniFile2();
+        iniFile2.read();
+        iniFile2.setValues("web_server", getConnection());
+        iniFile2.save();
     }
     
 }

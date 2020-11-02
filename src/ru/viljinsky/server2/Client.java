@@ -47,7 +47,9 @@ public class Client extends JPanel{
             try{
             switch (command){
                 case "config":
-                    cc.config(getParent());
+                    if(cc.config(getParent())){
+                        client.stop();
+                    };
                     break;
                 case "start":
                     start();
@@ -67,31 +69,20 @@ public class Client extends JPanel{
         
     };
     
-//    void config() throws Exception{
-//        ValuesPanel valuesPanel = new ValuesPanel();
-//        valuesPanel.setFields(new ValuesField[]{
-//            new ValuesFieldString("host"),
-//            new ValuesFieldInteger("port")
-//        });
-//        valuesPanel.setValues(getConnection());
-//        if (valuesPanel.showModal(getParent())){
-//            setConnection(valuesPanel.getValues());
-//        }
-//      
-//    }
-    
     void start() throws Exception{
         if (client==null){
             client = new ScheduleClient(cc.host, cc.port);
             client.start();
         }
     }
+    
     void stop() throws Exception{
         if (client!=null){
             client.stop();
             client=null;
         }
     }
+    
     void reload() throws Exception{
         if (client!=null && client.isConected()){
             client.send("hello");
@@ -148,7 +139,7 @@ public class Client extends JPanel{
                                 try{
                                     IDB db = new DB_JSON_decoder(message);
                                     view.open(db);
-                                    view.setDate(new Date());
+                                    view.setDate(new Date());                                    
                                 } catch(Exception e){
                                 } finally{
                                     setVisible(true);
@@ -165,6 +156,15 @@ public class Client extends JPanel{
     }
     
     ScheduleClient client; 
+    
+    DateControl dateControl = new DateControl(){
+
+        @Override
+        public void change() {
+            view.setDate(getDate());
+        }
+        
+    };
     
     static class FrameHeader extends JPanel{
 
@@ -185,17 +185,11 @@ public class Client extends JPanel{
         add(panel2,BorderLayout.PAGE_START);
         
         JPanel panel = new FrameHeader();
-        panel.add(new DateControl(){
-
-            @Override
-            public void change() {
-                view.setDate(getDate());
-            }
-            
-        });
+        panel.add(dateControl);
         panel.add(statusBar);
         
         add(panel,BorderLayout.PAGE_END);
+        cc.read();
     }
     
     
@@ -204,10 +198,12 @@ public class Client extends JPanel{
         @Override
         public void windowClosing(WindowEvent e) {
             try{
-            if (client!=null){ // && client.isConected()){
-                client.stop();
-                client=null;
-            }
+                cc.save();
+                if (client!=null){ // && client.isConected()){
+                    client.stop();
+                    client=null;
+                }
+            
             } catch(Exception s){
             }
         }
@@ -229,6 +225,7 @@ public class Client extends JPanel{
     }
     
     JFrame frame;
+    
     public void showInFrame(Component parent){  
         frame = new JFrame("Client");
         frame.setIconImage(Master.createImage(Color.yellow));
