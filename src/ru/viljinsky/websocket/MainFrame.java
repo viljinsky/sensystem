@@ -26,27 +26,34 @@ import ru.viljinsky.server.StatusBar;
  */
 public class MainFrame extends JPanel{
     
+    public static final String START = "start";
+    public static final String STOP = "stop";
+    public static final String MESSAGE = "message";
+    public static final String LIST = "list";
+    public static final String CLIENT = "client";
+    public static final String CLEAR = "clear";
+                
     WebSocketServer server = new WebSocketServer() {
 
         @Override
         public void onStateChange(int state) {
+            
             switch(state){
+                
                 case SERVER_RUN:
                     setStatusText("Сервер запущен");
                     break;
+                    
                 case SERVER_STOP:
                     setStatusText("Сервер остановлен");
                     break;
             }
+            
         }
 
-//        @Override
-//        public void onSocketEvent(int event, Socket socket) {
-//            onSocketEvent(event, socket,null); 
-//        }
-                
         @Override
         public void onSocketEvent(int event, Socket socket,String message) {
+            
             switch(event){
                 
                 case SOCKET_CONNECT:
@@ -69,7 +76,6 @@ public class MainFrame extends JPanel{
                             textOut(socket.toString()+" \""+message+"\"");
                         }
                     }
-//                    textOut(socket.toString()+" \""+message+"\"");
                     break;
                     
                 case SOCKET_ERROR:
@@ -82,8 +88,6 @@ public class MainFrame extends JPanel{
             }
         }
         
-        
-        
         @Override
         public void onMassage(String message) {
             textOut(message);
@@ -91,13 +95,6 @@ public class MainFrame extends JPanel{
 
     };
     
-    public static final String START = "start";
-    public static final String STOP = "stop";
-    public static final String MESSAGE = "message";
-    public static final String LIST = "list";
-    public static final String CLIENT = "client";
-    public static final String CLEAR = "clear";
-        
     MessagePane messagePane = new MessagePane();
     
     StatusBar statusBar = new StatusBar();
@@ -108,6 +105,7 @@ public class MainFrame extends JPanel{
         public void doCommand(String command) {
             try{
                 switch(command){
+                    
                     case CLEAR:
                         messagePane.clear();
                         break;
@@ -128,17 +126,12 @@ public class MainFrame extends JPanel{
                         for(Socket s: server.socketList()){
                             server.send(s, "hello gays");
                         }
-//                        server.sendToAll("hello gays");
                         break;
                         
                     case LIST:
                         server.list();
                         break;
                         
-                    case "CMD1":
-                        statusBar.setText(command);
-                        textOut(command);
-                        throw new UnsupportedOperationException("unsupported yet");
                 }
             } catch(Exception e){
                 showMessage(e.getMessage());

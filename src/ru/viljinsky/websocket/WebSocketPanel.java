@@ -142,8 +142,6 @@ public class WebSocketPanel extends JPanel {
                 return super.isEnabled(command); //To change body of generated methods, choose Tools | Templates.
             }
             
-            
-            
         };
         panel.showInFrame(null);
     }

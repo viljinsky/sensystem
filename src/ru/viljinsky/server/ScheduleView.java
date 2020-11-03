@@ -21,6 +21,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EtchedBorder;
 import ru.viljinsky.cells7.Cell;
 import ru.viljinsky.cells7.Item;
 import ru.viljinsky.cells7.View;
@@ -35,17 +36,16 @@ import static ru.viljinsky.project2019.replacement.IReplacement.FLAG_REPLACE;
 
 public class ScheduleView extends View implements IDataModel{
     
-    Date date_begin,date_end,date = new Date();;
+    Date date_begin,date_end,date = new Date();
     
     Recordset teacherFilter;
+    
     Recordset departFilter;
     
     Recordset day_list,bell_list,depart,room,subject,group_label,schedule,changes,building,teacher,skill,curriculum,profile,subject_group;
     
     Values attributes;
        
-//    ScheduleTitle title = new ScheduleTitle();
-    
     public ViewModel model;
     
     StatusBar statusBar = new StatusBar();
@@ -165,9 +165,7 @@ public class ScheduleView extends View implements IDataModel{
        repaint();
 
     }
-    
-    
-
+        
     @Override
     public void rowClick(int row, MouseEvent e) {
         model.getRowData(row).print();
@@ -253,8 +251,6 @@ public class ScheduleView extends View implements IDataModel{
         periodChange();
     }
     
-//    static ScheduleView view;
-    
     public void showInFrame(){
         
         ViewControl viewControl = new ViewControl(this);
@@ -272,6 +268,7 @@ public class ScheduleView extends View implements IDataModel{
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         JPanel panel = new JPanel();
+        panel.setBorder(new EtchedBorder());
         panel.setLayout(new BoxLayout(panel,BoxLayout.Y_AXIS));
         panel.add(viewControl);
         panel.add(filterPanel);

@@ -19,7 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import ru.viljinsky.project2019.Values;
 
 /**
  *
@@ -27,14 +26,22 @@ import ru.viljinsky.project2019.Values;
  */
 public class DateControl extends JPanel{
     
-    JLabel label = new JLabel("date");
     public static final String THIS_WEEK = "this_week";
     public static final String NEXT_WEEK = "next_week";
     public static final String FIRST_WEEK = "first_week";
     public static final String PRIOR_WEEK = "prior_week";
     public static final String LAST_WEEK = "last_week";
     
+    static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    static final SimpleDateFormat SIMPLE_DATE_FORMAT2 = new SimpleDateFormat("dd MMM");
+    static final SimpleDateFormat SIMPLE_DATE_FORMAT3 = new SimpleDateFormat("dd MMM yyyy");
+        
+    JLabel label = new JLabel("date");   
+    
+    Date date = new Date();
+    
     String first_date = "2020-09-01";
+    
     String last_date = "2020-10-25";
     
     public void setPeriod(String first_date,String last_date){
@@ -64,12 +71,14 @@ public class DateControl extends JPanel{
         c.add(Calendar.DAY_OF_WEEK, -7);
         setDate(c.getTime());
     }
+    
     void nextWeek(){
         Calendar c = Calendar.getInstance();
         c.setTime(date);
         c.add(Calendar.DAY_OF_WEEK, 7);
         setDate(c.getTime());
     }
+    
     void lastWeek() throws Exception{
         setDate(SIMPLE_DATE_FORMAT.parse(last_date));
     }
@@ -104,15 +113,10 @@ public class DateControl extends JPanel{
         }
                 
     }
+    
     public DateControl() {
         this(new Date());
     }
-    
-    Date date = new Date();
-    SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    SimpleDateFormat SIMPLE_DATE_FORMAT2 = new SimpleDateFormat("dd MMM");
-    SimpleDateFormat SIMPLE_DATE_FORMAT3 = new SimpleDateFormat("dd MMM yyyy");
-    
     
     public void setDate(Date date){
         try{           

@@ -45,6 +45,8 @@ public interface ViewModel{
 
 abstract class AbstractViewModel implements IDataModel,ViewModel{
 
+    ScheduleView view;
+
     @Override
     public Values getRowData(int row) {
         return ((ValuesHeader)view.getRowHeader(row)).values;
@@ -55,8 +57,6 @@ abstract class AbstractViewModel implements IDataModel,ViewModel{
         return ((ValuesHeader)view.getColumnHeader(col)).values;
     }
             
-    ScheduleView view;
-
     @Override
     public void setView(ScheduleView view){
         this.view = view;
@@ -501,5 +501,75 @@ class Model5 extends AbstractViewModel{
         }
         view.rebuild();
         
+    }
+}
+
+class Model6 extends AbstractViewModel{
+
+    @Override
+    Cell findCell(Values values) {
+        int col;
+        for(col=0;col<view.columnCount();col++){
+            Values v  = getColumnData(col);
+            if (v.equals(values.getValues(DAY_ID))){
+                break;
+            }
+        }
+        int row;
+        for(row=0;row<view.rowCount();row++){
+            Values v = getRowData(row);
+            if (v.equals(values.getValues(TEACHER_ID,BELL_ID))){
+                break;
+            }
+        }
+        return view.cell(col, row);
+    }
+    
+
+    @Override
+    public void init() throws Exception {
+        view.setDimension(0, 0);
+        
+        Recordset teacher;
+        if (view.teacherFilter==null){
+            teacher = view.teacher;
+        } else {
+            teacher = view.teacher.join(view.teacherFilter, TEACHER_ID);
+        }
+        
+        for(Iterator<Values> it = view.day_list.getIterator();it.hasNext();){
+            Values values = it.next();
+            ValuesHeader vh = new ValuesHeader(values.getString(DAY_NAME), values.getValues(DAY_ID));
+            view.addColumn(vh);
+        }
+        
+        for(Iterator<Values> it2=teacher.getIterator();it2.hasNext();){
+            Values v = it2.next();
+            ValuesHeader vh = new ValuesHeader(v.getString(LAST_NAME), v.getValues(TEACHER_ID));
+            view.addRow(vh);
+            
+            
+            for(Iterator<Values> it = view.bell_list.getIterator();it.hasNext();){
+                Values values = it.next();
+                values.put(TEACHER_ID, v.get(TEACHER_ID));
+                vh = new ValuesHeader(values.getString(TIME_START), values.getValues(BELL_ID,TEACHER_ID));
+                view.addRow(vh);
+            }
+        }
+        
+        view.rebuild();
+    }
+
+    @Override
+    public void setDate(Date date) throws Exception {
+        view.clearItems();
+        for(Iterator<Values> it = getScheculeRecordset(date).getIterator();it.hasNext();){
+            Values values = it.next();
+            Cell cell = findCell(values);
+            if (cell!=null){
+                cell.addItem(view.createItem(values));
+            }
+        }
+        view.rebuild();
     }
 }

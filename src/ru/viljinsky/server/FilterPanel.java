@@ -98,15 +98,19 @@ abstract class FilterContent extends JPanel implements IDataModel{
     static final String APPLY = "apply";
     static final String CLERA = "clear";
     static final String SELECT_ALL = "select_all";
+    
     String description = "Отметьте элементы, которые будут отображениы в сетке";
     
     ItemPanel itemPanel ;
     
     ScheduleView view;
+    
     String caption = "Фильтры";
+    
     JLabel label = new JLabel(description);
     
     public abstract ItemPanel createInnerPanel();
+    
     public abstract void applyFilter() throws Exception;
 
     public FilterContent(ScheduleView view) {
@@ -149,9 +153,9 @@ abstract class FilterContent extends JPanel implements IDataModel{
         }
 
     };
-    
-        
+            
     JDialog dialog;
+    
     public void showModal(Component parent){
         
         dialog = new BaseDialog();
@@ -159,12 +163,14 @@ abstract class FilterContent extends JPanel implements IDataModel{
         dialog.setModal(true);
         dialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
         dialog.setAlwaysOnTop(true);
-       
-//        dialog.setContentPane(this);
         dialog.add(this);
         dialog.setSize(500, 400);
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
+        try{
+            applyFilter();
+        } catch (Exception e){
+        }
 
     }
         
@@ -174,12 +180,18 @@ class TeacherFilter extends FilterContent{
 
     @Override
     public ItemPanel createInnerPanel() {
+        Recordset t;
+        try{
+         t = view.teacher.join(view.profile, PROFILE_ID);
+        } catch(Exception e){
+         t=view.teacher;   
+        }
         
-        ItemPanel p = new ItemPanel(view.teacher,TEACHER_ID){
+        ItemPanel p = new ItemPanel(t,TEACHER_ID){
 
             @Override
             String getCaption(Values values) {
-                return values.get(LAST_NAME)+" "+values.get(FIRST_NAME)+" "+values.get(PATRONYMIC);
+                return "<html>"+ values.get(LAST_NAME)+" "+values.get(FIRST_NAME)+" "+values.get(PATRONYMIC)+"<br><small>"+values.get(PROFILE_NAME)+"</small></html>";
             }
 
         };
@@ -245,9 +257,7 @@ class DepartFilter extends FilterContent{
         view.model.init();
         view.setDate(view.getDate());
     }
-    
-    
-    
+            
 }
 
 /**
@@ -260,8 +270,6 @@ public class FilterPanel extends JPanel implements IDataModel{
         
     static final String FILTER1 = "Классы";
     static final String FILTER2 = "Преподаватели";
-//    static final String FILTER3 = "filter3";
-//    static final String FILTER4 = "filter4";
     
     private JButton createButton(String command){
         Action a = new AbstractAction(command) {
@@ -276,8 +284,8 @@ public class FilterPanel extends JPanel implements IDataModel{
     
     void doCommand(String command){
         switch(command){
-            case FILTER1:
-                
+            
+            case FILTER1:                
                 new DepartFilter(view).showModal(getRootPane());
                 break;
                 
@@ -292,9 +300,6 @@ public class FilterPanel extends JPanel implements IDataModel{
         setLayout(new FlowLayout(FlowLayout.LEFT));
         add(createButton(FILTER1));
         add(createButton(FILTER2));
-//        add(createButton(FILTER3));
-//        add(createButton(FILTER4));
-        
     }
     
     public void showInFrame(){

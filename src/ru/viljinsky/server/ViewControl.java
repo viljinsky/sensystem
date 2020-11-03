@@ -19,13 +19,16 @@ import javax.swing.JToggleButton;
  */
 
 public class ViewControl extends JPanel {
+    
     public static final String MODEL1 = "model1";
     public static final String MODEL2 = "model2";
     public static final String MODEL3 = "model3";
     public static final String MODEL4 = "model4";
     public static final String MODEL5 = "model5";
+    public static final String MODEL6 = "model6";
     
     ScheduleView view;
+    
     ButtonGroup buttonGroup = new ButtonGroup();
 
     private JToggleButton createButton(String command) {
@@ -48,6 +51,7 @@ public class ViewControl extends JPanel {
         add(createButton(MODEL3));
         add(createButton(MODEL4));
         add(createButton(MODEL5));
+        add(createButton(MODEL6));
     }
 
     public void doCommand(String command) {
@@ -68,6 +72,9 @@ public class ViewControl extends JPanel {
                 break;
             case MODEL5:
                 model = new Model5();
+                break;
+            case MODEL6:
+                model = new Model6();
                 break;
             default:
                 return;

@@ -40,12 +40,15 @@ public class ClientFrame extends JPanel{
         @Override
         public void onStateChange(int state) {
             switch(state){
+                
                 case CLOSED:
                     statusText("Нет соединения");
                     break;
+                    
                 case WAIT:
                     statusText("Ожидание сервера...");
                     break;
+                    
                 case READY:
                     statusText("Слушаю...");
                     try{
@@ -76,28 +79,11 @@ public class ClientFrame extends JPanel{
     MessagePane messagePane = new MessagePane();
     
     void sendHello() throws Exception{
-        if (client.isConected()){
-            
+        
+        if (client.isConected()){            
             client.send("hello","login=admin","password=sensystem","description=Кабинет руссуого языка и литературы");
-
-//            client.out.write("hello".getBytes("utf-8"));
-//            client.out.write(0x0d);
-//            
-//            client.out.write("login = client1".getBytes("utf-8"));
-//            client.out.write(0x0d);
-//            
-//            client.out.write("password = sensystem".getBytes("utf-8"));
-//            client.out.write(0x0d);
-//            
-//            client.out.write("description = Кабиент русского языка и литературы".getBytes("utf-8"));
-//            client.out.write(0x0d);
-//            
-//            client.out.write(0);
-//            
-//            client.out.flush();
-
-
         }
+        
     }
     
     CommandBar commandBar = new CommandBar(START,STOP,null,MESSAGE,MESSAGE_TO_ALL,HELLOW,null,CLEAR){
@@ -153,13 +139,9 @@ public class ClientFrame extends JPanel{
             System.out.println("ClientFrame.opened");
             client.start();
         }
-        
-        
-        
+                        
     };
-    
-    
-
+        
     public ClientFrame() {
         setLayout(new BorderLayout());
         add(messagePane);

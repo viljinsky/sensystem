@@ -23,10 +23,23 @@ import java.util.Map;
  * @author viljinsky
  */
 public abstract class WebSocketServer extends ArrayList {
-
-    int port = 3345;
     
     static final String UTF8 = "utf-8";
+    
+    public static final int SERVER_RUN = 1;
+    
+    public static final int SERVER_STOP = 2;
+    
+    public static final int SOCKET_CONNECT = 1;
+    
+    public static final int SOCKET_MESSAGE = 2;
+    
+    public static final int SOCKET_DISCONNECT = 3;
+    
+    public static final int SOCKET_ERROR = 4;
+        
+    int port = 3345;
+    
     ServerSocket server;
 
     public WebSocketServer() {
@@ -40,24 +53,15 @@ public abstract class WebSocketServer extends ArrayList {
         this.port = port;
     }
             
-    public boolean isClosed(){
+    public boolean isClosed(){        
         return server==null || server.isClosed();
     }
-    
-    public static final int SERVER_RUN = 1;
-    public static final int SERVER_STOP = 2;
-    
-    public static final int SOCKET_CONNECT = 1;
-    public static final int SOCKET_MESSAGE = 2;
-    public static final int SOCKET_DISCONNECT = 3;
-    public static final int SOCKET_ERROR = 4;
     
     public abstract void onStateChange(int state);
         
     public abstract void onSocketEvent(int event,Socket socket,String message);
 
     public abstract void onMassage(String message);
-
     
     class ClientHandler {
 
@@ -185,7 +189,7 @@ public abstract class WebSocketServer extends ArrayList {
 
             @Override
             public void interrupt() {
-                super.interrupt(); //To change body of generated methods, choose Tools | Templates.
+                super.interrupt();
                 System.out.println("interapted");
             }
             
@@ -269,15 +273,15 @@ public abstract class WebSocketServer extends ArrayList {
     
     public List<Socket> socketList(){
         List<Socket> list = new ArrayList<>();
-        for(Object p: this){
+        this.stream().forEach(p->{
             ClientHandler h = (ClientHandler)p;
             list.add(h.socket);
-        }
+        });
         return list;
     }
     
     public void send(Socket socket,String message){
-        for(Object p: this){
+        this.stream().forEach(p->{
             ClientHandler h = (ClientHandler)p;
             if (h.socket.equals(socket)){
                 try{
@@ -286,13 +290,13 @@ public abstract class WebSocketServer extends ArrayList {
                     onSocketEvent(SOCKET_ERROR,h.socket, e.getMessage());
                 }
             }
-        }
+        });
     }
     
     public void list() {
-        for (Object p : this) {
+        this.stream().forEach(p-> {
             onMassage(p.toString());
-        }
+        });
     }
     
 }
