@@ -35,7 +35,7 @@ import ru.viljinsky.tcp.HttpServer;
  */
 public class MyServer extends JPanel implements IDataModel{
     
-    public static final String SERVER_DATA = "server_data.json";
+    public static final String SERVER_DATA = "timetabler.json";
         
     CalendarView calendarView = new CalendarView(){
 
@@ -201,6 +201,7 @@ public class MyServer extends JPanel implements IDataModel{
             setStatusText("Загружены локальные данные");
         }
         } catch (Exception e){
+            e.printStackTrace();
         }
         
         JFrame frame = new JFrame("Составитель расписания (сервер)");

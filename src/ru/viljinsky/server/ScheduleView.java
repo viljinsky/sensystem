@@ -89,7 +89,6 @@ public class ScheduleView extends View implements IDataModel{
 
         public ScheduleItem(Values data) {
             super(data);
-//            depart_label = data.getString(DEPART_LABEL);
             flag = data.isValue(FLAG)?data.getInteger(FLAG):-1;
             group_label = data.getString(GROUP_LABEL);
             room_name = data.getString(ROOM_NAME);
@@ -106,13 +105,11 @@ public class ScheduleView extends View implements IDataModel{
             if (bound!=null){
                 if (flag == FLAG_CANCEL || flag == IReplacement.FLAG_MOVE_TO){
                     g.setColor(Color.WHITE);
-//                    g.setFont(g.getFont().deriveFont(Font.ITALIC));
                 } else
                     g.setColor(color);
                     
                 g.fillRect(bound.x, bound.y, bound.width-1, bound.height-1);
                 FontMetrics fm = g.getFontMetrics();
-//                int x = bound.x;
                 int y = (bound.height-fm.getHeight())/2+fm.getHeight()-fm.getDescent();
                 
                 switch(flag){
@@ -146,8 +143,7 @@ public class ScheduleView extends View implements IDataModel{
         public String toString() {
             return hint;
         }
-        
-        
+                
     }
 
     @Override
@@ -224,7 +220,7 @@ public class ScheduleView extends View implements IDataModel{
         building = db.building();
         day_list = db.day_list().select(DAY_ID,DAY_NAME);
         bell_list = db.bell_list().select(BELL_ID,TIME_START,TIME_END);
-        depart = db.depart();//.select(DEPART_ID,DEPART_LABEL);
+        depart = db.depart();
         subject = db.subject();
         room = db.room();
         group_label = db.group_label();
@@ -241,12 +237,9 @@ public class ScheduleView extends View implements IDataModel{
         date_begin = new SimpleDateFormat("yyyy-MM-dd").parse(attributes.getString(DATE_BEGIN));
         date_end = new SimpleDateFormat("yyyy-MM-dd").parse(attributes.getString(DATE_END));
         subject_group = db.subject_group();
-        
-                
-        
+                               
         model.init();
         setVisible(true);        
-//        title.setValues(model.attributes());
         
         periodChange();
     }
