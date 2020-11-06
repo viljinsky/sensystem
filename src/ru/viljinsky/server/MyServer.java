@@ -21,7 +21,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import ru.viljinsky.calendars.CalendarView;
+import ru.viljinsky.calendars2.CalendarBlock;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;
@@ -37,11 +37,11 @@ public class MyServer extends JPanel implements IDataModel{
     
     public static final String SERVER_DATA = "timetabler.json";
         
-    CalendarView calendarView = new CalendarView(){
+    CalendarBlock calendarView = new CalendarBlock(){
 
         @Override
-        public void change() {
-            Date date = getSelectionDate();
+        public void selectedChange() {
+            Date date = getSelectedDate();
             if(date!=null){
                 view.setDate(date);
             }
@@ -64,7 +64,7 @@ public class MyServer extends JPanel implements IDataModel{
         });
         calendarView.setMonth(values.getString(DATE_BEGIN),values.getString(DATE_END));
         calendarView.setPeriod(values.getString(DATE_BEGIN),values.getString(DATE_END));
-        calendarView.setSelectionDate(new Date());
+        calendarView.setSelectedDate(new Date());
         
         Recordset r = db.changes().count(DATE);
         for(Object[] p: r){

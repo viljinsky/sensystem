@@ -13,7 +13,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import ru.viljinsky.calendars.CalendarView;
+import javax.swing.border.EmptyBorder;
+import ru.viljinsky.calendars2.CalendarBlock;
 import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.Grid;
 import ru.viljinsky.project2019.IDataModel;
@@ -29,11 +30,12 @@ import ru.viljinsky.server.IDB;
  * @author viljinsky
  */
 public class TestSchedule2 extends JPanel implements IDataModel{
-    CalendarView calendarView = new CalendarView(){
+    
+    CalendarBlock calendarView = new CalendarBlock(){
 
         @Override
-        public void change() {
-            setDate(getSelectionDate());
+        public void selectedChange() {
+            setDate(getSelectedDate());
         }
         
     };
@@ -67,7 +69,12 @@ public class TestSchedule2 extends JPanel implements IDataModel{
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,new JScrollPane(grid1),new JScrollPane(grid2));
         splitPane.setResizeWeight(.5);
         add(splitPane);
-        add(calendarView,BorderLayout.WEST);
+        
+        JPanel panel = new JPanel();
+        panel.setBorder(new EmptyBorder(0,18,0,18));
+        panel.add(calendarView);
+        
+        add(new JScrollPane(panel),BorderLayout.WEST);
     }
     
     public void open(IDB db)throws Exception{
