@@ -21,7 +21,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import ru.viljinsky.calendars2.CalendarBlock;
+import ru.viljinsky.calendars.CalendarBlock;
 import ru.viljinsky.project2019.IDataModel;
 import ru.viljinsky.project2019.Recordset;
 import ru.viljinsky.project2019.Values;

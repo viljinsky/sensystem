@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.border.EmptyBorder;
-import ru.viljinsky.calendars2.CalendarBlock;
+import ru.viljinsky.calendars.CalendarBlock;
 import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.Grid;
 import ru.viljinsky.project2019.IDataModel;
