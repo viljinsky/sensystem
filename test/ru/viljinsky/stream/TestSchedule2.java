@@ -8,12 +8,12 @@ package ru.viljinsky.stream;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.border.EmptyBorder;
 import ru.viljinsky.calendars.CalendarBlock;
 import ru.viljinsky.project2019.DataModel;
 import ru.viljinsky.project2019.Grid;
@@ -30,6 +30,12 @@ import ru.viljinsky.server.IDB;
  * @author viljinsky
  */
 public class TestSchedule2 extends JPanel implements IDataModel{
+
+    Recordset schedule;
+    Recordset changes;
+    
+    Grid grid1 = new Grid();
+    Grid grid2 = new Grid(); 
     
     CalendarBlock calendarView = new CalendarBlock(){
 
@@ -40,12 +46,7 @@ public class TestSchedule2 extends JPanel implements IDataModel{
         
     };
     
-        Recordset schedule;
-        Recordset changes;
-    
     void setDate(Date date){
-//        Recordset schedule = db.schedule();
-//        Recordset changes = db.changes();
         try{
             if (date!=null){
                 Recordset s = new Document.ScheduleRecordset(schedule, changes, date);
@@ -53,15 +54,12 @@ public class TestSchedule2 extends JPanel implements IDataModel{
                 grid1.setRecordset(s);
                 grid2.setRecordset(changes);
             }
-//        grid1.setRecordset(schedule);
-//        grid2.setRecordset(changes);
         
         } catch(Exception e){
             e.printStackTrace();
         }
     }
     
-    Grid grid1 = new Grid(),grid2 = new Grid();
 
     public TestSchedule2() {
         setPreferredSize(new Dimension(1200,600));
@@ -69,12 +67,7 @@ public class TestSchedule2 extends JPanel implements IDataModel{
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,new JScrollPane(grid1),new JScrollPane(grid2));
         splitPane.setResizeWeight(.5);
         add(splitPane);
-        
-        JPanel panel = new JPanel();
-        panel.setBorder(new EmptyBorder(0,18,0,18));
-        panel.add(calendarView);
-        
-        add(new JScrollPane(panel),BorderLayout.WEST);
+        add(new JScrollPane(calendarView.getPanel()),BorderLayout.WEST);
     }
     
     public void open(IDB db)throws Exception{
@@ -85,14 +78,15 @@ public class TestSchedule2 extends JPanel implements IDataModel{
             attributes.put((String)p[0],p[1]);
         }
         calendarView.setMonth(attributes.getString(DATE_BEGIN),attributes.getString(DATE_END));
-        
+                
         schedule = db.schedule();
         changes = db.changes();
         
         grid1.setRecordset(schedule);
         grid2.setRecordset(changes);
-//        calendarView.setSelectionDate(new Date());
         
+        calendarView.setSelectedDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        calendarView.selectedChange();
     }
     
     public static void main(String[] args) throws Exception{
@@ -108,9 +102,10 @@ public class TestSchedule2 extends JPanel implements IDataModel{
 //        IDB db = new DB_JSON_decoder(new File(MyServer.SERVER_DATA));
 //        panel.open(db);
         DataModel.setConnection("моё расписание.db");
-        Proc.query(con->{;
+        Proc.query(con->{
             IDB db = new DB_SQLITE(con);
             panel.open(db);
+            panel.updateUI();
         });
     }
     

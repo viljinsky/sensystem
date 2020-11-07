@@ -18,6 +18,7 @@ import ru.viljinsky.project2019.values.ValuesPanel;
  * @author viljinsky
  */
 class ClientConnection {
+    
     public static final String $HOSR = "Хост";
     public static final String $PORT = "Порт";
     public static String HOST = "host";

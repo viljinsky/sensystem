@@ -63,9 +63,7 @@ public class Master extends JPanel{
             }
             
         }.start();
-        
-        
-        
+                        
     }
     
     public static final String FILE_OPEN = "open";

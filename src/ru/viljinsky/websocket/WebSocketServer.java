@@ -129,9 +129,9 @@ public abstract class WebSocketServer extends ArrayList {
                                     break loop;
                                 }
                                 if(s.startsWith("GET")){
-                                    readHeader(message);
+                                    readHeader(message.trim());
                                 } else {
-                                    onSocketEvent(SOCKET_MESSAGE, socket, s);
+                                    onSocketEvent(SOCKET_MESSAGE, socket, s.trim());
                                 }
                                 
                             }

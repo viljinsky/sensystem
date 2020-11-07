@@ -43,6 +43,7 @@ public class Server extends WebSocketPanel{
             showMessage(e.getMessage());
         }
     }
+    
     String readData(){
         File file = new File(fileName);
         if(file.exists()){
@@ -139,9 +140,7 @@ public class Server extends WebSocketPanel{
             showMessage(e.getMessage());
         }
     }
-    
-    
-    
+            
     @Override
     public void doCommand(String command) {
         try{
@@ -197,7 +196,6 @@ public class Server extends WebSocketPanel{
         return true;
     }
                         
-
     public Server() {
         super();
         setPreferredSize(new Dimension(800,300));
@@ -207,7 +205,6 @@ public class Server extends WebSocketPanel{
         setIcon(Master.createImage(Color.PINK));
         sc.read();
     }
-
     
     public static void main(String[] args){
         
